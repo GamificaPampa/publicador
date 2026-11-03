@@ -20,6 +20,7 @@
 
     /* Arrumando a página em uma coluna central que cabe no celular e no projetor */
     .topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px clamp(16px, 4vw, 40px); }
+    .topo-acoes { display: flex; flex-wrap: wrap; gap: 12px; }
     main { display: grid; gap: 28px; width: min(760px, 100% - 32px); margin: 16px auto 64px; }
     h1 { text-align: center; }
     .lema { text-align: center; margin: -8px 0 0; }
@@ -139,6 +140,7 @@ p, li, blockquote {
     <symbol id="i-enviar" viewBox="0 0 24 24"><path d="M12 15V4m-5 5 5-5 5 5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
     <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="3" fill="#fff" stroke="#2f2a4a" stroke-width="2.6"/><path d="M16 5.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h.5" fill="none" stroke="#2f2a4a" stroke-width="2.6" stroke-linecap="round"/></symbol>
     <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M5 9h9.5a5.5 5.5 0 0 1 0 11H9" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/><path d="M9 4.5 4.5 9 9 13.5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lista" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2" fill="#ffd23f" stroke="#2f2a4a" stroke-width="2.4"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#4fd6a6" stroke="#2f2a4a" stroke-width="2.4"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#ff5f8f" stroke="#2f2a4a" stroke-width="2.4"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#4da3ff" stroke="#2f2a4a" stroke-width="2.4"/></symbol>
     <symbol id="i-denovo" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/><path d="M19 2.5v5h-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9V21c0 .3.2.6.7.5A10 10 0 0 0 12 2z" fill="#2f2a4a"/></symbol>
   </svg>
@@ -155,7 +157,10 @@ p, li, blockquote {
   </div>
 
   <header class="topo">
-    <a class="btn" href="https://gamificapampa.github.io/">Voltar ao GamificaPampa</a>
+    <div class="topo-acoes">
+      <a class="btn" href="https://gamificapampa.github.io/">Voltar ao GamificaPampa</a>
+      <button class="btn" type="button" id="botao-meus-jogos" hidden><svg width="22" height="22" aria-hidden="true"><use href="#i-lista"/></svg>Meus jogos</button>
+    </div>
     <img src="/identidade-visual/logos/gamificapampa-horizontal.svg" alt="GamificaPampa" width="200" height="44">
   </header>
 
@@ -178,6 +183,7 @@ p, li, blockquote {
       <h2>Entre com o GitHub</h2>
       <p>O GitHub é um site gratuito que guarda páginas na internet. O seu jogo fica na sua conta, e você entra uma vez só.</p>
       <div class="acoes"><button class="btn btn--big" type="button" id="botao-entrar"><svg width="24" height="24" aria-hidden="true"><use href="#i-github"/></svg>Entrar com o GitHub</button></div>
+      <p class="nota"><b>Já publicou um jogo?</b> Entre do mesmo jeito para ver os seus em <b>Meus jogos</b> e fazer uma versão nova, com o mesmo link e o mesmo QR Code.</p>
       <div class="guia">
         <h3>Como entrar, passo a passo</h3>
         <div class="abas" role="group" aria-label="Você já tem conta no GitHub?">
@@ -340,6 +346,7 @@ p, li, blockquote {
     // Mostrando só a tela pedida e marcando os passos já vencidos
     function mostrar(id) {
       for (const tela of document.querySelectorAll('.tela')) tela.hidden = tela.id !== id
+      elemento('botao-meus-jogos').hidden = id === 'entrar'
       const ordem = ['entrar', 'publicar', 'pronto']
       for (const passo of document.querySelectorAll('.passos li')) {
         passo.classList.toggle('atual', passo.dataset.tela === id)
@@ -506,7 +513,15 @@ p, li, blockquote {
       elemento('titulo-versao').hidden = elemento('versao').hidden = elemento('botao-cancelar').hidden = true
       elemento('texto-publicar').textContent = 'Publicar o jogo'
       mostrar('publicar')
-      carregarJogos().catch(() => {})
+      return carregarJogos().catch(() => {})
+    }
+    elemento('botao-cancelar').onclick = modoNovo
+
+    // Levando à lista de Meus jogos de qualquer tela. Sem jogo publicado, o Bit explica onde eles vão aparecer
+    elemento('botao-meus-jogos').onclick = async () => {
+      await (editando || elemento('publicar').hidden ? modoNovo() : carregarJogos().catch(() => {}))
+      if (elemento('meus-jogos').hidden) return falar('pensando', 'Você ainda não tem jogos publicados. Quando publicar o primeiro, ele aparece aqui em Meus jogos.')
+      elemento('meus-jogos').scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
     // Mostrando o nome do arquivo escolhido, seja pelo toque ou arrastando para a zona
@@ -657,7 +672,6 @@ p, li, blockquote {
     }
 
     elemento('botao-outro').onclick = modoNovo
-    elemento('botao-cancelar').onclick = modoNovo
 
     iniciar().catch(erro => { mostrar('entrar'); mostrarErro('erro-entrar', erro.message) })
   </script>
