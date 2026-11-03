@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Publicar meu jogo · GamificaPampa</title>
+  <meta name="description" content="Coloque na internet o jogo que você criou com a IA e ganhe um link e um QR Code para a turma.">
+  <meta property="og:title" content="Publicar meu jogo · GamificaPampa">
+  <meta property="og:description" content="Coloque na internet o jogo que você criou com a IA e ganhe um link e um QR Code para a turma.">
+  <meta property="og:image" content="https://gamificapampa.github.io/identidade-visual/logos/gamificapampa-github-avatar.png">
+  <link rel="icon" type="image/svg+xml" href="/identidade-visual/logos/gamificapampa-icone.svg">
+  <link rel="stylesheet" href="/identidade-visual/css/fontes.css">
+  <link rel="stylesheet" href="/identidade-visual/css/cores.css">
+  <link rel="stylesheet" href="/identidade-visual/css/componentes.css">
+  <link rel="stylesheet" href="/identidade-visual/css/cenario.css">
+  <link rel="stylesheet" href="/identidade-visual/css/animacoes.css">
+  <style>
+    /* Arrumando a página em uma coluna central que cabe no celular e no projetor */
+    .topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px clamp(16px, 4vw, 40px); }
+    main { display: grid; gap: 28px; width: min(760px, 100% - 32px); margin: 16px auto 64px; }
+    h1 { text-align: center; }
+    .lema { text-align: center; margin: -8px 0 0; }
+    .rodape { padding: 24px 16px 120px; text-align: center; font-size: 15px; font-weight: 600; }
+
+    /* Mostrando em que passo o professor está: entrar, enviar e jogar */
+    .passos { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .passos li { display: flex; align-items: center; gap: 8px; padding: 6px 16px 6px 6px; border: 4px solid var(--ink); border-radius: 999px; background: var(--white); font-weight: 700; font-size: 15px; opacity: .55; }
+    .passos li span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--white); }
+    .passos li.atual { opacity: 1; background: var(--c); box-shadow: 0 5px 0 var(--ink); }
+    .passos li.feito { opacity: 1; }
+    .passos li.feito span { background: var(--mint); color: var(--ink); }
+
+    /* Pondo o Bit ao lado do balão de fala */
+    .bit { display: flex; align-items: center; justify-content: center; gap: 22px; }
+    .bit img { width: 104px; height: auto; flex: none; }
+    .bit .bubble { margin: 0; max-width: 520px; }
+
+    .card h2 { font-size: clamp(24px, 4vw, 30px); margin-bottom: 14px; }
+    .card p { margin: 0 0 14px; }
+    .suave { color: var(--soft); }
+
+    /* Passo a passo com figuras numeradas, como na Galeria de jogos */
+    .roteiro { display: grid; gap: 14px; margin: 16px 0 4px; padding: 0; list-style: none; }
+    .roteiro li { display: flex; align-items: center; gap: 14px; font-weight: 500; }
+    .figura { position: relative; display: grid; place-items: center; width: 56px; height: 56px; flex: none; background: var(--c); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); }
+    .figura svg { width: 34px; height: 34px; }
+    .figura span { position: absolute; left: -9px; top: -9px; display: grid; place-items: center; width: 26px; height: 26px; background: var(--ink); color: var(--white); border-radius: 50%; font-size: 15px; font-weight: 700; }
+    details { margin-top: 20px; border-top: 3px dashed #d9d4ee; padding-top: 16px; }
+    summary { cursor: pointer; font-weight: 700; min-height: 32px; }
+    .acoes { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 22px; }
+    .acoes.centro { justify-content: center; }
+
+    /* Formulário do jogo: nome, arquivo arrastado ou escolhido, código colado e o aceite */
+    label.campo { display: block; font-weight: 700; margin: 18px 0 8px; }
+    input[type=text], textarea { width: 100%; font: 500 17px var(--font); color: var(--ink); border: 4px solid var(--ink); border-radius: 18px; padding: 12px 16px; background: var(--white); }
+    input[type=text]:focus-visible, textarea:focus-visible { outline: 4px solid var(--pink); outline-offset: 2px; }
+    textarea { min-height: 140px; resize: vertical; font-size: 15px; }
+    .zona { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 16px; border: 4px dashed var(--ink); border-radius: 22px; background: var(--cream); text-align: center; cursor: pointer; font-weight: 600; transition: background .2s; }
+    .zona svg { width: 52px; height: 52px; }
+    .zona.cheia { border-style: solid; background: #e3faf1; }
+    .zona.arrastando { background: #fff1b8; }
+    .zona input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .zona:focus-within { outline: 4px solid var(--pink); outline-offset: 3px; }
+    .aceite { display: flex; gap: 12px; align-items: flex-start; margin-top: 20px; font-weight: 500; cursor: pointer; }
+    .aceite input { width: 24px; height: 24px; margin-top: 2px; flex: none; accent-color: var(--mint); }
+
+    /* Etapas da publicação, marcadas uma a uma enquanto o GitHub trabalha */
+    .etapas { display: grid; gap: 10px; margin: 22px 0 0; padding: 0; list-style: none; font-weight: 600; }
+    .etapas li { display: flex; align-items: center; gap: 12px; color: var(--soft); }
+    .etapas li::before { content: ""; width: 26px; height: 26px; flex: none; border: 3px solid var(--ink); border-radius: 50%; background: var(--white); }
+    .etapas li.agora { color: var(--ink); }
+    .etapas li.agora::before { border-color: var(--ink) var(--ink) var(--ink) transparent; animation: girar 1s linear infinite; }
+    .etapas li.feita { color: var(--ink); }
+    .etapas li.feita::before { content: "✓"; display: grid; place-items: center; background: var(--mint); font-weight: 700; font-size: 16px; }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    .erro { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #ffe0ea; font-weight: 600; }
+
+    /* Resultado: link, QR Code e os botões de jogar, compartilhar e baixar */
+    .resultado { text-align: center; }
+    .link { display: inline-block; max-width: 100%; word-break: break-all; padding: 10px 18px; border: 4px solid var(--ink); border-radius: 18px; background: var(--cream); font-weight: 700; text-decoration: none; }
+    .qr { display: inline-grid; place-items: center; margin: 20px 0 6px; padding: 14px; border: 4px solid var(--ink); border-radius: 22px; background: var(--white); box-shadow: 0 8px 0 var(--ink); }
+    .qr img, .qr canvas { width: 200px; height: 200px; }
+    .estado { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+    .estado.montando::before { content: ""; width: 18px; height: 18px; border: 3px solid var(--ink); border-right-color: transparent; border-radius: 50%; animation: girar 1s linear infinite; }
+
+    @media (max-width: 560px) {
+      .bit { flex-direction: column; }
+      .bit .bubble::before, .bit .bubble::after { display: none; }
+      .passos li { font-size: 0; padding-right: 6px; }
+      .passos li span { font-size: 15px; }
+      .bit .bubble { width: 100%; }
+      .passos li.atual { font-size: 15px; padding-right: 16px; }
+    }
+  </style>
+<style>/* tipografia automatica (viuvas, orfas e forcas) */
+p, li, blockquote {
+  orphans: 2;
+  widows: 2;
+  hyphens: manual;
+  text-wrap: pretty;
+}
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <symbol id="i-jogar" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" fill="#fff" stroke="#2f2a4a" stroke-width="3" stroke-linejoin="round"/></symbol>
+    <symbol id="i-compartilhar" viewBox="0 0 24 24"><path d="M7 12l10-6M7 12l10 6" stroke="#2f2a4a" stroke-width="2.6"/><circle cx="6" cy="12" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="5.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="18.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/></symbol>
+    <symbol id="i-baixar" viewBox="0 0 24 24"><path d="M12 3v11m-5-5 5 5 5-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="i-enviar" viewBox="0 0 24 24"><path d="M12 15V4m-5 5 5-5 5 5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="i-denovo" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/><path d="M19 2.5v5h-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9V21c0 .3.2.6.7.5A10 10 0 0 0 12 2z" fill="#2f2a4a"/></symbol>
+  </svg>
+
+  <!-- O degradê do céu vem do componentes.css. O cenário fica fixo atrás da página, com nuvens, símbolos de código e morros -->
+  <div class="cenario cenario--fixo" aria-hidden="true">
+    <span class="nuvem" style="top: 5%; --w: 190px; --t: 70s; --d: -10s"></span>
+    <span class="nuvem" style="top: 22%; --w: 230px; --t: 95s; --d: -70s"></span>
+    <span class="nuvem" style="top: 48%; --w: 140px; --t: 60s; --d: -26s"></span>
+    <span class="simbolo" style="left: 5%; top: 30%">&lt;/&gt;</span>
+    <span class="simbolo" style="right: 6%; top: 16%; --d: -2s">{ }</span>
+    <span class="simbolo" style="right: 8%; top: 58%; --d: -4s">01</span>
+    <span class="morros"></span>
+  </div>
+
+  <header class="topo">
+    <a class="btn" href="https://gamificapampa.github.io/">Voltar ao GamificaPampa</a>
+    <img src="/identidade-visual/logos/gamificapampa-horizontal.svg" alt="GamificaPampa" width="200" height="44">
+  </header>
+
+  <main>
+    <h1 class="loud anima-letras"><span class="yellow">Publicar</span> <span class="pink">meu jogo</span></h1>
+    <p class="lema"><span class="pill" style="--c: var(--mint)">Um link e um QR Code para a turma</span></p>
+
+    <ol class="passos" aria-label="Passos">
+      <li data-tela="entrar" style="--c: var(--yellow)"><span>1</span>Entrar</li>
+      <li data-tela="publicar" style="--c: var(--purple)"><span>2</span>Enviar o jogo</li>
+      <li data-tela="pronto" style="--c: var(--mint)"><span>3</span>Jogar</li>
+    </ol>
+
+    <div class="bit">
+      <img id="bit" class="anima-flutuar" src="/identidade-visual/mascote/bit-acenando.svg" alt="">
+      <p class="bubble anima-balao" id="fala" aria-live="polite">Oi! Eu coloco o seu jogo na internet, com um link e um QR Code para a turma. Primeiro, entre com o GitHub.</p>
+    </div>
+
+    <section class="card tela" id="entrar">
+      <h2>Entre com o GitHub</h2>
+      <p>O GitHub é um site gratuito que guarda páginas na internet. O seu jogo fica na sua conta, e você entra uma vez só.</p>
+      <div class="acoes"><button class="btn btn--big" type="button" id="botao-entrar"><svg width="24" height="24" aria-hidden="true"><use href="#i-github"/></svg>Entrar com o GitHub</button></div>
+      <details>
+        <summary>Ainda não tenho conta no GitHub</summary>
+        <ol class="roteiro">
+          <li><span class="figura" style="--c: var(--blue)"><span>1</span><svg aria-hidden="true"><use href="#i-github"/></svg></span><span>Abra <a href="https://github.com/signup" target="_blank" rel="noopener"><b>github.com/signup</b></a> numa aba nova.</span></li>
+          <li><span class="figura" style="--c: var(--yellow)"><span>2</span><b style="font-size: 26px">G</b></span><span>Toque em <b>Continuar com Google</b> e escolha a sua conta.</span></li>
+          <li><span class="figura" style="--c: var(--pink)"><span>3</span><b style="font-size: 22px">@</b></span><span>Escolha um <b>nome de usuário</b> curto. Ele aparece no link do jogo.</span></li>
+          <li><span class="figura" style="--c: var(--mint)"><span>4</span><svg aria-hidden="true"><use href="#i-denovo"/></svg></span><span>Volte para esta aba e toque em <b>Entrar com o GitHub</b>.</span></li>
+        </ol>
+      </details>
+      <p class="erro" id="erro-entrar" hidden></p>
+    </section>
+
+    <section class="card tela" id="publicar" hidden>
+      <h2>Envie o jogo, <span id="usuario"></span></h2>
+      <label class="campo" for="nome">Nome do jogo</label>
+      <input type="text" id="nome" placeholder="Por exemplo: Pizzaria das Frações" maxlength="60" autocomplete="off">
+
+      <label class="campo" for="arquivo">Arquivo do jogo</label>
+      <label class="zona" id="zona">
+        <svg aria-hidden="true"><use href="#i-enviar"/></svg>
+        <span id="zona-texto">Toque para escolher o arquivo <b>.html</b> ou arraste ele para cá</span>
+        <input type="file" id="arquivo" accept=".html,.htm,text/html">
+      </label>
+
+      <details>
+        <summary>Prefiro colar o código do jogo</summary>
+        <label class="campo" for="codigo">Código do jogo</label>
+        <textarea id="codigo" placeholder="&lt;!doctype html&gt; ..."></textarea>
+      </details>
+
+      <label class="aceite"><input type="checkbox" id="aceite"><span>O jogo não tem nomes, fotos ou dados de alunos, e o conteúdo é próprio para a turma.</span></label>
+
+      <div class="acoes"><button class="btn btn--big btn--compartilhar" type="button" id="botao-publicar"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg>Publicar o jogo</button></div>
+
+      <ul class="etapas" id="etapas" hidden>
+        <li>Criando o espaço do jogo</li>
+        <li>Enviando o jogo</li>
+        <li>Colocando o jogo no ar</li>
+      </ul>
+      <p class="erro" id="erro-publicar" hidden></p>
+    </section>
+
+    <section class="card tela resultado" id="pronto" hidden>
+      <h2>Seu jogo está no ar!</h2>
+      <p><a class="link" id="link-jogo" target="_blank" rel="noopener"></a></p>
+      <div class="qr" id="qr" role="img" aria-label="QR Code do jogo"></div>
+      <p class="estado montando" id="estado">O GitHub está montando o site. Leva cerca de um minuto.</p>
+      <div class="acoes centro">
+        <a class="btn btn--jogar" id="botao-jogar" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar</a>
+        <a class="btn btn--compartilhar" id="botao-whatsapp" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg>Mandar no WhatsApp</a>
+        <a class="btn btn--baixar" id="botao-baixar-qr" download="qrcode-do-jogo.png"><svg width="22" height="22" aria-hidden="true"><use href="#i-baixar"/></svg>Baixar o QR Code</a>
+      </div>
+      <div class="acoes centro"><button class="btn" type="button" id="botao-outro">Publicar outro jogo</button></div>
+    </section>
+  </main>
+
+  <footer class="rodape">GamificaPampa · UNIPAMPA, Campus Alegrete</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    const CLIENT_ID = 'Ov23lifzY8sJFjQQPClf'
+    const WORKER = 'https://publicador-gamificapampa.gamificapampa.workers.dev/'
+    const ENDERECO_DE_VOLTA = 'https://gamificapampa.github.io/publicador/'
+    const esperar = milissegundos => new Promise(resolver => setTimeout(resolver, milissegundos))
+    const elemento = id => document.getElementById(id)
+
+    // Guardando a pose e a fala do Bit em cada tela
+    const BIT = {
+      entrar: ['acenando', 'Oi! Eu coloco o seu jogo na internet, com um link e um QR Code para a turma. Primeiro, entre com o GitHub.'],
+      publicar: ['pensando', 'Agora me mande o jogo. Pode ser o arquivo HTML ou o código que a IA criou.'],
+      pronto: ['comemorando', 'Seu jogo está no ar! Mande o link para a turma ou projete o QR Code.'],
+    }
+
+    // Trocando a pose do Bit e tocando de novo a animação do balão a cada fala
+    function falar(pose, texto) {
+      elemento('bit').src = `/identidade-visual/mascote/bit-${pose}.svg`
+      const fala = elemento('fala')
+      fala.textContent = texto
+      fala.classList.remove('anima-balao')
+      void fala.offsetWidth
+      fala.classList.add('anima-balao')
+    }
+
+    // Mostrando só a tela pedida e marcando os passos já vencidos
+    function mostrar(id) {
+      for (const tela of document.querySelectorAll('.tela')) tela.hidden = tela.id !== id
+      const ordem = ['entrar', 'publicar', 'pronto']
+      for (const passo of document.querySelectorAll('.passos li')) {
+        passo.classList.toggle('atual', passo.dataset.tela === id)
+        passo.classList.toggle('feito', ordem.indexOf(passo.dataset.tela) < ordem.indexOf(id))
+      }
+      falar(...BIT[id])
+    }
+
+    function mostrarErro(id, texto) {
+      elemento(id).textContent = texto
+      elemento(id).hidden = !texto
+      if (texto) falar('ops', 'Ops! ' + texto)
+    }
+
+    // Chamando a API do GitHub com o token do professor. Se o login venceu, volta para a tela de entrar
+    async function github(caminho, opcoes = {}) {
+      const resposta = await fetch('https://api.github.com' + caminho, {
+        ...opcoes,
+        headers: { Authorization: 'Bearer ' + sessionStorage.getItem('token'), Accept: 'application/vnd.github+json' },
+      })
+      if (resposta.status === 401) {
+        sessionStorage.removeItem('token')
+        mostrar('entrar')
+        throw new Error('O login venceu. Entre de novo.')
+      }
+      return resposta
+    }
+
+    // Levando o professor ao GitHub para autorizar o publicador. O "state" aleatório protege a volta
+    elemento('botao-entrar').onclick = () => {
+      const estado = crypto.randomUUID()
+      sessionStorage.setItem('estado', estado)
+      location.href = 'https://github.com/login/oauth/authorize?' + new URLSearchParams({
+        client_id: CLIENT_ID,
+        redirect_uri: ENDERECO_DE_VOLTA,
+        scope: 'repo',
+        state: estado,
+      })
+    }
+
+    // Trocando, na volta do GitHub, o código pelo token no Worker e limpando o endereço
+    async function iniciar() {
+      const parametros = new URLSearchParams(location.search)
+      if (parametros.has('code')) {
+        history.replaceState(null, '', location.pathname)
+        if (parametros.get('state') !== sessionStorage.getItem('estado')) throw new Error('O login não foi confirmado. Tente de novo.')
+        const resposta = await fetch(WORKER, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: parametros.get('code'), redirect_uri: ENDERECO_DE_VOLTA }),
+        })
+        const dados = await resposta.json()
+        if (!dados.access_token) throw new Error('O login não deu certo. Tente de novo.')
+        sessionStorage.setItem('token', dados.access_token)
+      }
+      if (!sessionStorage.getItem('token')) return mostrar('entrar')
+      const usuario = await (await github('/user')).json()
+      sessionStorage.setItem('usuario', usuario.login)
+      elemento('usuario').textContent = (usuario.name || usuario.login).split(' ')[0]
+      mostrar('publicar')
+    }
+
+    // Mostrando o nome do arquivo escolhido, seja pelo toque ou arrastando para a zona
+    function arquivoEscolhido() {
+      const arquivo = elemento('arquivo').files[0]
+      elemento('zona').classList.toggle('cheia', Boolean(arquivo))
+      elemento('zona-texto').innerHTML = arquivo ? `<b>${arquivo.name}</b> pronto para enviar` : 'Toque para escolher o arquivo <b>.html</b> ou arraste ele para cá'
+    }
+    elemento('arquivo').onchange = arquivoEscolhido
+    elemento('zona').ondragover = evento => { evento.preventDefault(); elemento('zona').classList.add('arrastando') }
+    elemento('zona').ondragleave = () => elemento('zona').classList.remove('arrastando')
+    elemento('zona').ondrop = evento => {
+      evento.preventDefault()
+      elemento('zona').classList.remove('arrastando')
+      elemento('arquivo').files = evento.dataTransfer.files
+      arquivoEscolhido()
+    }
+
+    // Marcando a etapa atual da publicação e as que já terminaram
+    function etapa(numero) {
+      elemento('etapas').hidden = false
+      elemento('etapas').querySelectorAll('li').forEach((item, indice) => {
+        item.classList.toggle('feita', indice < numero)
+        item.classList.toggle('agora', indice === numero)
+      })
+    }
+
+    // Transformando o nome do jogo no nome do repositório, sem acentos nem espaços
+    const nomeDoRepositorio = nome => nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+    // Publicando: cria o repositório (ou reaproveita o de mesmo nome), envia o index.html e liga o GitHub Pages
+    elemento('botao-publicar').onclick = async () => {
+      const nome = elemento('nome').value.trim()
+      const arquivo = elemento('arquivo').files[0]
+      const bytes = arquivo ? new Uint8Array(await arquivo.arrayBuffer()) : new TextEncoder().encode(elemento('codigo').value)
+      const texto = new TextDecoder().decode(bytes)
+      const repositorio = nomeDoRepositorio(nome)
+      const dono = sessionStorage.getItem('usuario')
+      mostrarErro('erro-publicar', '')
+      if (!repositorio) return mostrarErro('erro-publicar', 'Dê um nome ao jogo.')
+      if (!/<(html|body|script)/i.test(texto)) return mostrarErro('erro-publicar', 'Escolha o arquivo HTML do jogo ou cole o código dele.')
+      if (!elemento('aceite').checked) return mostrarErro('erro-publicar', 'Confirme que o jogo não tem dados de alunos.')
+
+      elemento('botao-publicar').disabled = true
+      try {
+        etapa(0)
+        const criacao = await github('/user/repos', {
+          method: 'POST',
+          body: JSON.stringify({ name: repositorio, description: `Jogo "${nome}", publicado com o GamificaPampa`, private: false }),
+        })
+        if (!criacao.ok && criacao.status !== 422) throw new Error('Não consegui criar o espaço do jogo.')
+        const caminho = `/repos/${dono}/${repositorio}`
+        const ramo = (await (await github(caminho)).json()).default_branch
+
+        // Enviando o jogo como index.html. Se ele já existia, o "sha" diz ao GitHub qual versão substituir
+        etapa(1)
+        const atual = await github(caminho + '/contents/index.html')
+        const sha = atual.ok ? (await atual.json()).sha : undefined
+        let binario = ''
+        for (const byte of bytes) binario += String.fromCharCode(byte)
+        const envio = await github(caminho + '/contents/index.html', {
+          method: 'PUT',
+          body: JSON.stringify({ message: `Publica o jogo ${nome}`, content: btoa(binario), sha }),
+        })
+        if (!envio.ok) throw new Error('Não consegui enviar o jogo.')
+
+        // Ligando o GitHub Pages. Logo após o envio o ramo pode não estar pronto, então tenta algumas vezes
+        etapa(2)
+        for (let tentativa = 1; tentativa <= 5; tentativa++) {
+          const pages = await github(caminho + '/pages', { method: 'POST', body: JSON.stringify({ source: { branch: ramo, path: '/' } }) })
+          if (pages.ok || pages.status === 409) break
+          if (tentativa === 5) throw new Error('Não consegui colocar o jogo no ar.')
+          await esperar(2000)
+        }
+        etapa(3)
+        await acompanhar(caminho, nome)
+      } catch (erro) {
+        mostrarErro('erro-publicar', erro.message + ' Tente de novo.')
+      } finally {
+        elemento('botao-publicar').disabled = false
+      }
+    }
+
+    // Mostrando o link e o QR Code e acompanhando o GitHub até o site ficar pronto (cerca de um minuto)
+    async function acompanhar(caminho, nome) {
+      const link = (await (await github(caminho + '/pages')).json()).html_url
+      elemento('link-jogo').href = elemento('botao-jogar').href = link
+      elemento('link-jogo').textContent = link.replace('https://', '')
+      elemento('botao-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(`Jogue "${nome}": ${link}`)
+      elemento('qr').innerHTML = ''
+      new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
+      elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
+      mostrar('pronto')
+      elemento('estado').className = 'estado montando'
+      elemento('estado').textContent = 'O GitHub está montando o site. Leva cerca de um minuto.'
+      for (let tentativa = 0; tentativa < 36; tentativa++) {
+        const situacao = (await (await github(caminho + '/pages')).json()).status
+        if (situacao === 'built') {
+          elemento('estado').className = 'estado'
+          elemento('estado').textContent = 'Pronto! O jogo já abre pelo link e pelo QR Code.'
+          return
+        }
+        if (situacao === 'errored') {
+          elemento('estado').className = 'estado'
+          elemento('estado').textContent = 'O GitHub não conseguiu montar o site. Publique o jogo de novo.'
+          return
+        }
+        await esperar(5000)
+      }
+    }
+
+    elemento('botao-outro').onclick = () => {
+      for (const id of ['nome', 'arquivo', 'codigo']) elemento(id).value = ''
+      elemento('aceite').checked = false
+      elemento('etapas').hidden = true
+      arquivoEscolhido()
+      mostrar('publicar')
+    }
+
+    iniciar().catch(erro => { mostrar('entrar'); mostrarErro('erro-entrar', erro.message) })
+  </script>
+</body>
+</html>
