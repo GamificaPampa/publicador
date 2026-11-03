@@ -15,6 +15,9 @@
   <link rel="stylesheet" href="/identidade-visual/css/cenario.css">
   <link rel="stylesheet" href="/identidade-visual/css/animacoes.css">
   <style>
+    /* Escondendo de verdade o que tem o atributo hidden, mesmo nos blocos com display próprio */
+    [hidden] { display: none !important; }
+
     /* Arrumando a página em uma coluna central que cabe no celular e no projetor */
     .topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px clamp(16px, 4vw, 40px); }
     main { display: grid; gap: 28px; width: min(760px, 100% - 32px); margin: 16px auto 64px; }
@@ -48,6 +51,18 @@
     details { margin-top: 20px; border-top: 3px dashed #d9d4ee; padding-top: 16px; }
     summary { cursor: pointer; font-weight: 700; min-height: 32px; }
     .acoes { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 22px; }
+    /* Guia de login: abas para quem tem ou não tem conta e prints das telas do GitHub com o botão certo destacado */
+    .guia { margin-top: 24px; border-top: 3px dashed #d9d4ee; padding-top: 20px; }
+    .guia h3 { font-size: 22px; margin-bottom: 14px; }
+    .abas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+    .abas .btn[aria-pressed="true"] { --c: var(--yellow); }
+    .caminho { gap: 22px; margin-top: 20px; }
+    .caminho > li { align-items: flex-start; }
+    .caminho p { margin: 4px 0 8px; }
+    .dicas { margin: 0 0 8px; padding-left: 20px; }
+    .dicas li { display: list-item; margin: 4px 0; }
+    .print { display: block; width: min(420px, 100%); height: auto; border: 3px solid var(--ink); border-radius: 14px; box-shadow: 0 5px 0 var(--ink); }
+    .nota { margin-top: 20px !important; padding: 12px 16px; border-radius: 16px; background: var(--cream); font-size: 15px; }
     .acoes.centro { justify-content: center; }
 
     /* Formulário do jogo: nome, arquivo arrastado ou escolhido, código colado e o aceite */
@@ -146,15 +161,56 @@ p, li, blockquote {
       <h2>Entre com o GitHub</h2>
       <p>O GitHub é um site gratuito que guarda páginas na internet. O seu jogo fica na sua conta, e você entra uma vez só.</p>
       <div class="acoes"><button class="btn btn--big" type="button" id="botao-entrar"><svg width="24" height="24" aria-hidden="true"><use href="#i-github"/></svg>Entrar com o GitHub</button></div>
-      <details>
-        <summary>Ainda não tenho conta no GitHub</summary>
-        <ol class="roteiro">
-          <li><span class="figura" style="--c: var(--blue)"><span>1</span><svg aria-hidden="true"><use href="#i-github"/></svg></span><span>Abra <a href="https://github.com/signup" target="_blank" rel="noopener"><b>github.com/signup</b></a> numa aba nova.</span></li>
-          <li><span class="figura" style="--c: var(--yellow)"><span>2</span><b style="font-size: 26px">G</b></span><span>Toque em <b>Continuar com Google</b> e escolha a sua conta.</span></li>
-          <li><span class="figura" style="--c: var(--pink)"><span>3</span><b style="font-size: 22px">@</b></span><span>Escolha um <b>nome de usuário</b> curto. Ele aparece no link do jogo.</span></li>
-          <li><span class="figura" style="--c: var(--mint)"><span>4</span><svg aria-hidden="true"><use href="#i-denovo"/></svg></span><span>Volte para esta aba e toque em <b>Entrar com o GitHub</b>.</span></li>
+      <div class="guia">
+        <h3>Como entrar, passo a passo</h3>
+        <div class="abas" role="group" aria-label="Você já tem conta no GitHub?">
+          <button class="btn btn--small" type="button" data-caminho="sem-conta" aria-pressed="true">Não tenho conta no GitHub</button>
+          <button class="btn btn--small" type="button" data-caminho="com-conta" aria-pressed="false">Já tenho conta no GitHub</button>
+        </div>
+
+        <ol class="roteiro caminho" id="sem-conta">
+          <li><span class="figura" style="--c: var(--yellow)"><span>1</span><svg aria-hidden="true"><use href="#i-github"/></svg></span>
+            <div><p>Toque no botão <b>Entrar com o GitHub</b>, aqui em cima. A página do GitHub abre em inglês.</p></div></li>
+          <li><span class="figura" style="--c: var(--blue)"><span>2</span><b>G</b></span>
+            <div><p>Na tela <b>Sign in to GitHub</b>, toque em <b>Continue with Google</b>. Não precisa criar senha.</p>
+              <img class="print" src="imagens/github-entrar-google.webp" alt="Tela Sign in to GitHub com o botão Continue with Google destacado" loading="lazy"></div></li>
+          <li><span class="figura" style="--c: var(--pink)"><span>3</span><b>@</b></span>
+            <div><p>O Google pergunta qual conta usar. Escolha a sua e toque em <b>Continuar</b>.</p>
+              <img class="print" src="imagens/google-continuar.webp" alt="Tela do Google para escolher a conta, com o botão Continuar destacado" loading="lazy"></div></li>
+          <li><span class="figura" style="--c: var(--purple)"><span>4</span><b>Aa</b></span>
+            <div><p>Na tela <b>Sign up for GitHub</b>, o e-mail já vem preenchido. Complete assim:</p>
+              <ul class="dicas">
+                <li><b>Username:</b> um nome curto, sem espaços, como <i>maria-silva</i>. Ele aparece no link dos seus jogos. O círculo verde mostra que o nome está livre.</li>
+                <li><b>Your Country/Region:</b> Brazil.</li>
+                <li><b>Email preferences:</b> pode deixar desmarcado.</li>
+              </ul>
+              <p>Toque no botão verde <b>Create account</b>. Se aparecer um aviso de cookies no rodapé, toque em <b>Reject</b>.</p>
+              <img class="print" src="imagens/github-criar-conta.webp" alt="Tela Sign up for GitHub preenchida, com o botão Create account destacado" loading="lazy"></div></li>
+          <li><span class="figura" style="--c: var(--mint)"><span>5</span><svg aria-hidden="true"><use href="#i-jogar"/></svg></span>
+            <div><p>Por fim, toque no botão verde <b>Authorize GamificaPampa</b>. Você volta para esta página, pronto para enviar o jogo.</p>
+              <img class="print" src="imagens/github-autorizar.webp" alt="Tela Authorize Publicador GamificaPampa com o botão Authorize destacado" loading="lazy"></div></li>
         </ol>
-      </details>
+
+        <ol class="roteiro caminho" id="com-conta" hidden>
+          <li><span class="figura" style="--c: var(--yellow)"><span>1</span><svg aria-hidden="true"><use href="#i-github"/></svg></span>
+            <div><p>Toque no botão <b>Entrar com o GitHub</b>, aqui em cima. Se você já estiver conectado ao GitHub neste aparelho, pule para o passo 4.</p></div></li>
+          <li><span class="figura" style="--c: var(--blue)"><span>2</span><b>G</b></span>
+            <div><p>Na tela <b>Sign in to GitHub</b>, entre do mesmo jeito que criou a conta:</p>
+              <ul class="dicas">
+                <li>Com e-mail e senha, preencha <b>Username or email address</b> e <b>Password</b> e toque em <b>Sign in</b>.</li>
+                <li>Com o Google, toque em <b>Continue with Google</b> e escolha a sua conta.</li>
+              </ul>
+              <img class="print" src="imagens/github-entrar.webp" alt="Tela Sign in to GitHub com os botões Sign in e Continue with Google destacados" loading="lazy"></div></li>
+          <li><span class="figura" style="--c: var(--pink)"><span>3</span><b>?</b></span>
+            <div><p>Algumas contas pedem uma confirmação a mais, chamada <b>Two-factor authentication</b>. Se ela aparecer, confirme do jeito que você costuma usar, como a chave de acesso (<b>Use passkey</b>), um código do aplicativo ou um SMS. Em <b>More options</b> ficam as outras formas.</p>
+              <img class="print" src="imagens/github-confirmacao.webp" alt="Tela Two-factor authentication com o botão Use passkey destacado" loading="lazy"></div></li>
+          <li><span class="figura" style="--c: var(--mint)"><span>4</span><svg aria-hidden="true"><use href="#i-jogar"/></svg></span>
+            <div><p>Na primeira vez, toque no botão verde <b>Authorize GamificaPampa</b>. Nas próximas, o GitHub pula essa tela e você volta direto para cá.</p>
+              <img class="print" src="imagens/github-autorizar.webp" alt="Tela Authorize Publicador GamificaPampa com o botão Authorize destacado" loading="lazy"></div></li>
+        </ol>
+
+        <p class="nota"><b>Por que o GitHub fala em repositórios privados?</b> O GitHub exige essa permissão para ligar o site do jogo. O Publicador usa ela apenas para criar o espaço de cada jogo que você enviar, e você pode cancelar o acesso quando quiser em github.com, no menu Settings, em Applications.</p>
+      </div>
       <p class="erro" id="erro-entrar" hidden></p>
     </section>
 
@@ -270,6 +326,16 @@ p, li, blockquote {
         scope: 'repo',
         state: estado,
       })
+    }
+
+    // Trocando entre os dois caminhos do guia de login (com e sem conta no GitHub)
+    for (const aba of document.querySelectorAll('[data-caminho]')) {
+      aba.onclick = () => {
+        for (const outra of document.querySelectorAll('[data-caminho]')) {
+          outra.setAttribute('aria-pressed', outra === aba)
+          elemento(outra.dataset.caminho).hidden = outra !== aba
+        }
+      }
     }
 
     // Trocando, na volta do GitHub, o código pelo token no Worker e limpando o endereço
