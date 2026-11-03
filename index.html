@@ -66,6 +66,8 @@
     .print { display: block; width: min(420px, 100%); height: auto; border: 3px solid var(--ink); border-radius: 14px; box-shadow: 0 5px 0 var(--ink); }
     .nota { margin-top: 20px !important; padding: 12px 16px; border-radius: 16px; background: var(--cream); font-size: 15px; }
     .acoes.centro { justify-content: center; }
+    .nota.saida { margin: 0 0 22px !important; background: #fff1b8; border: 3px solid var(--ink); }
+    .nota.saida p { margin: 0 0 10px; }
 
     /* Formulário do jogo: nome, arquivo arrastado ou escolhido, código colado e o aceite */
     label.campo { display: block; font-weight: 700; margin: 18px 0 8px; }
@@ -141,6 +143,7 @@ p, li, blockquote {
     <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="3" fill="#fff" stroke="#2f2a4a" stroke-width="2.6"/><path d="M16 5.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h.5" fill="none" stroke="#2f2a4a" stroke-width="2.6" stroke-linecap="round"/></symbol>
     <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M5 9h9.5a5.5 5.5 0 0 1 0 11H9" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/><path d="M9 4.5 4.5 9 9 13.5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-lista" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2" fill="#ffd23f" stroke="#2f2a4a" stroke-width="2.4"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#4fd6a6" stroke="#2f2a4a" stroke-width="2.4"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#ff5f8f" stroke="#2f2a4a" stroke-width="2.4"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#4da3ff" stroke="#2f2a4a" stroke-width="2.4"/></symbol>
+    <symbol id="i-sair" viewBox="0 0 24 24"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" fill="#fff" stroke="#2f2a4a" stroke-width="2.6" stroke-linejoin="round"/><path d="M11 12h10m-4-4 4 4-4 4" fill="none" stroke="#2f2a4a" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-denovo" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/><path d="M19 2.5v5h-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9V21c0 .3.2.6.7.5A10 10 0 0 0 12 2z" fill="#2f2a4a"/></symbol>
   </svg>
@@ -160,6 +163,7 @@ p, li, blockquote {
     <div class="topo-acoes">
       <a class="btn" href="https://gamificapampa.github.io/">Voltar ao GamificaPampa</a>
       <button class="btn" type="button" id="botao-meus-jogos" hidden><svg width="22" height="22" aria-hidden="true"><use href="#i-lista"/></svg>Meus jogos</button>
+      <button class="btn" type="button" id="botao-sair" hidden><svg width="22" height="22" aria-hidden="true"><use href="#i-sair"/></svg>Sair</button>
     </div>
     <img src="/identidade-visual/logos/gamificapampa-horizontal.svg" alt="GamificaPampa" width="200" height="44">
   </header>
@@ -180,6 +184,11 @@ p, li, blockquote {
     </div>
 
     <section class="card tela" id="entrar">
+      <div class="nota saida" id="aviso-saida" hidden>
+        <p><b>Você saiu do publicador.</b> O navegador ainda está conectado ao GitHub. Se este computador é da escola ou de outra pessoa, saia também do GitHub: senão, quem tocar em Entrar com o GitHub entra na sua conta.</p>
+        <p>Na página que abrir, toque em <b>Sign out</b> <span class="trad">(sair)</span>.</p>
+        <a class="btn btn--small" href="https://github.com/logout" target="_blank" rel="noopener"><svg width="20" height="20" aria-hidden="true"><use href="#i-github"/></svg>Sair também do GitHub</a>
+      </div>
       <h2>Entre com o GitHub</h2>
       <p>O GitHub é um site gratuito que guarda páginas na internet. O seu jogo fica na sua conta, e você entra uma vez só.</p>
       <div class="acoes"><button class="btn btn--big" type="button" id="botao-entrar"><svg width="24" height="24" aria-hidden="true"><use href="#i-github"/></svg>Entrar com o GitHub</button></div>
@@ -346,7 +355,7 @@ p, li, blockquote {
     // Mostrando só a tela pedida e marcando os passos já vencidos
     function mostrar(id) {
       for (const tela of document.querySelectorAll('.tela')) tela.hidden = tela.id !== id
-      elemento('botao-meus-jogos').hidden = id === 'entrar'
+      elemento('botao-meus-jogos').hidden = elemento('botao-sair').hidden = id === 'entrar'
       const ordem = ['entrar', 'publicar', 'pronto']
       for (const passo of document.querySelectorAll('.passos li')) {
         passo.classList.toggle('atual', passo.dataset.tela === id)
@@ -672,6 +681,19 @@ p, li, blockquote {
     }
 
     elemento('botao-outro').onclick = modoNovo
+
+    // Saindo: apaga o login desta aba e lembra que o navegador continua conectado ao GitHub
+    elemento('botao-sair').onclick = () => {
+      for (const chave of ['token', 'usuario', 'estado']) sessionStorage.removeItem(chave)
+      editando = null
+      limparFormulario()
+      elemento('lista-jogos').replaceChildren()
+      elemento('meus-jogos').hidden = true
+      mostrar('entrar')
+      elemento('aviso-saida').hidden = false
+      falar('acenando', 'Até a próxima! Se o computador for da escola, saia também do GitHub pelo aviso aqui embaixo.')
+      scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     iniciar().catch(erro => { mostrar('entrar'); mostrarErro('erro-entrar', erro.message) })
   </script>
