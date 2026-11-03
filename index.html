@@ -99,6 +99,18 @@
     .estado { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
     .estado.montando::before { content: ""; width: 18px; height: 18px; border: 3px solid var(--ink); border-right-color: transparent; border-radius: 50%; animation: girar 1s linear infinite; }
 
+    /* Meus jogos: a lista dos jogos já publicados, cada um com o link e o botão da versão nova */
+    .pilha { display: grid; gap: 28px; }
+    .jogos { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+    .jogos li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 18px; background: var(--cream); }
+    .jogos li > div:first-child { flex: 1 1 280px; min-width: 0; }
+    .jogos b { display: block; font-size: 19px; }
+    .jogos a { font-size: 15px; font-weight: 600; color: var(--soft); word-break: break-all; }
+    .jogos .acoes, .acoes.perto { gap: 10px; margin-top: 0; }
+    .acoes.perto { margin-top: 10px; }
+    .versao .roteiro { margin-top: 4px; }
+    .versao .nota .btn { margin-top: 10px; }
+
     @media (max-width: 560px) {
       .bit { flex-direction: column; }
       .bit .bubble::before, .bit .bubble::after { display: none; }
@@ -106,6 +118,8 @@
       .passos li span { font-size: 15px; }
       .bit .bubble { width: 100%; }
       .passos li.atual { font-size: 15px; padding-right: 16px; }
+      .jogos li { padding: 12px; }
+      .jogos .btn { padding: 4px 14px; }
     }
   </style>
 <style>/* tipografia automatica (viuvas, orfas e forcas) */
@@ -123,6 +137,8 @@ p, li, blockquote {
     <symbol id="i-compartilhar" viewBox="0 0 24 24"><path d="M7 12l10-6M7 12l10 6" stroke="#2f2a4a" stroke-width="2.6"/><circle cx="6" cy="12" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="5.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="18.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/></symbol>
     <symbol id="i-baixar" viewBox="0 0 24 24"><path d="M12 3v11m-5-5 5 5 5-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
     <symbol id="i-enviar" viewBox="0 0 24 24"><path d="M12 15V4m-5 5 5-5 5 5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="3" fill="#fff" stroke="#2f2a4a" stroke-width="2.6"/><path d="M16 5.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h.5" fill="none" stroke="#2f2a4a" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M5 9h9.5a5.5 5.5 0 0 1 0 11H9" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/><path d="M9 4.5 4.5 9 9 13.5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-denovo" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/><path d="M19 2.5v5h-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9V21c0 .3.2.6.7.5A10 10 0 0 0 12 2z" fill="#2f2a4a"/></symbol>
   </svg>
@@ -215,10 +231,40 @@ p, li, blockquote {
       <p class="erro" id="erro-entrar" hidden></p>
     </section>
 
-    <section class="card tela" id="publicar" hidden>
-      <h2>Envie o jogo, <span id="usuario"></span></h2>
-      <label class="campo" for="nome">Nome do jogo</label>
-      <input type="text" id="nome" placeholder="Por exemplo: Pizzaria das Frações" maxlength="60" autocomplete="off">
+    <div class="tela pilha" id="publicar" hidden>
+    <section class="card" id="meus-jogos" hidden>
+      <h2>Meus jogos</h2>
+      <p>Para melhorar um jogo sem mudar o link nem o QR Code, toque em <b>Versão nova</b>.</p>
+      <ul class="jogos" id="lista-jogos"></ul>
+    </section>
+
+    <section class="card" id="formulario">
+      <h2 id="titulo-novo">Envie o jogo, <span id="usuario"></span></h2>
+      <h2 id="titulo-versao" hidden></h2>
+
+      <div class="versao" id="versao" hidden>
+        <ol class="roteiro">
+          <li><span class="figura" style="--c: var(--yellow)"><span>1</span><svg aria-hidden="true"><use href="#i-copiar"/></svg></span>
+            <div><p>Copie o código do jogo que está no ar.</p>
+              <div class="acoes perto">
+                <button class="btn btn--small" type="button" id="botao-copiar" disabled><svg width="20" height="20" aria-hidden="true"><use href="#i-copiar"/></svg>Copiar o código</button>
+                <a class="btn btn--small btn--baixar" id="botao-baixar-codigo" download="jogo.html" hidden><svg width="20" height="20" aria-hidden="true"><use href="#i-baixar"/></svg>Baixar o arquivo</a>
+              </div></div></li>
+          <li><span class="figura" style="--c: var(--blue)"><span>2</span><b>+</b></span>
+            <div><p>No Gemini, abra o <b>Canvas</b> (no <b>+</b>, em Mais ferramentas), cole o código e envie.</p></div></li>
+          <li><span class="figura" style="--c: var(--pink)"><span>3</span><b>Aa</b></span>
+            <div><p>Na mensagem seguinte, peça só o que quer mudar. Por exemplo: <i>Acrescente uma fase mais difícil e mantenha o resto do jogo.</i></p></div></li>
+          <li><span class="figura" style="--c: var(--mint)"><span>4</span><svg aria-hidden="true"><use href="#i-enviar"/></svg></span>
+            <div><p>Quando ficar bom, envie o jogo novo aqui embaixo, pelo arquivo ou colando o código.</p></div></li>
+        </ol>
+        <p class="nota" id="nota-anterior" hidden>Não gostou da última versão? O GitHub guarda as anteriores, e você pode voltar para a de <b id="data-anterior"></b>.<br>
+          <button class="btn btn--small" type="button" id="botao-anterior"><svg width="20" height="20" aria-hidden="true"><use href="#i-voltar"/></svg>Voltar para a versão anterior</button></p>
+      </div>
+
+      <div id="campo-nome">
+        <label class="campo" for="nome">Nome do jogo</label>
+        <input type="text" id="nome" placeholder="Por exemplo: Pizzaria das Frações" maxlength="60" autocomplete="off">
+      </div>
 
       <label class="campo" for="arquivo">Arquivo do jogo</label>
       <label class="zona" id="zona">
@@ -235,18 +281,22 @@ p, li, blockquote {
 
       <label class="aceite"><input type="checkbox" id="aceite"><span>O jogo não tem nomes, fotos ou dados de alunos, e o conteúdo é próprio para a turma.</span></label>
 
-      <div class="acoes"><button class="btn btn--big btn--compartilhar" type="button" id="botao-publicar"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg>Publicar o jogo</button></div>
+      <div class="acoes">
+        <button class="btn btn--big btn--compartilhar" type="button" id="botao-publicar"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg><span id="texto-publicar">Publicar o jogo</span></button>
+        <button class="btn" type="button" id="botao-cancelar" hidden>Cancelar</button>
+      </div>
 
       <ul class="etapas" id="etapas" hidden>
-        <li>Criando o espaço do jogo</li>
+        <li>Preparando o espaço do jogo</li>
         <li>Enviando o jogo</li>
         <li>Colocando o jogo no ar</li>
       </ul>
       <p class="erro" id="erro-publicar" hidden></p>
     </section>
+    </div>
 
     <section class="card tela resultado" id="pronto" hidden>
-      <h2>Seu jogo está no ar!</h2>
+      <h2 id="titulo-pronto">Seu jogo está no ar!</h2>
       <p><a class="link" id="link-jogo" target="_blank" rel="noopener"></a></p>
       <div class="qr" id="qr" role="img" aria-label="QR Code do jogo"></div>
       <p class="estado montando" id="estado">O GitHub está montando o site. Leva cerca de um minuto.</p>
@@ -274,6 +324,7 @@ p, li, blockquote {
       entrar: ['acenando', 'Oi! Eu coloco o seu jogo na internet, com um link e um QR Code para a turma. Primeiro, entre com o GitHub.'],
       publicar: ['pensando', 'Agora me mande o jogo. Pode ser o arquivo HTML ou o código que a IA criou.'],
       pronto: ['comemorando', 'Seu jogo está no ar! Mande o link para a turma ou projete o QR Code.'],
+      versao: ['pensando', 'Vamos fazer a versão nova! Copie o código, peça as mudanças no Gemini e me mande o jogo de volta. O link e o QR Code continuam os mesmos.'],
     }
 
     // Trocando a pose do Bit e tocando de novo a animação do balão a cada fala
@@ -307,7 +358,7 @@ p, li, blockquote {
     async function github(caminho, opcoes = {}) {
       const resposta = await fetch('https://api.github.com' + caminho, {
         ...opcoes,
-        headers: { Authorization: 'Bearer ' + sessionStorage.getItem('token'), Accept: 'application/vnd.github+json' },
+        headers: { Authorization: 'Bearer ' + sessionStorage.getItem('token'), Accept: 'application/vnd.github+json', ...opcoes.headers },
       })
       if (resposta.status === 401) {
         sessionStorage.removeItem('token')
@@ -359,6 +410,103 @@ p, li, blockquote {
       sessionStorage.setItem('usuario', usuario.login)
       elemento('usuario').textContent = (usuario.name || usuario.login).split(' ')[0]
       mostrar('publicar')
+      carregarJogos().catch(() => {})
+    }
+
+    // Reconhecendo pela descrição os repositórios que o publicador criou e tirando dela o nome do jogo
+    const DESCRICAO = /^Jogo "(.*)", publicado com o GamificaPampa$/
+    const linkDoJogo = repositorio => `https://${sessionStorage.getItem('usuario').toLowerCase()}.github.io/${repositorio}/`
+
+    // Listando em Meus jogos os jogos já publicados, do mais recente para o mais antigo
+    async function carregarJogos() {
+      const resposta = await github('/user/repos?type=owner&sort=updated&per_page=100')
+      const jogos = resposta.ok ? (await resposta.json()).filter(repo => DESCRICAO.test(repo.description || '')) : []
+      const lista = elemento('lista-jogos')
+      lista.replaceChildren()
+      for (const repo of jogos) {
+        const nome = repo.description.match(DESCRICAO)[1]
+        const link = linkDoJogo(repo.name)
+        const texto = document.createElement('div')
+        const titulo = Object.assign(document.createElement('b'), { textContent: nome })
+        const endereco = Object.assign(document.createElement('a'), { href: link, target: '_blank', rel: 'noopener', textContent: link.replace('https://', '') })
+        texto.append(titulo, endereco)
+        const acoes = Object.assign(document.createElement('div'), { className: 'acoes' })
+        acoes.innerHTML = '<a class="btn btn--small btn--jogar" target="_blank" rel="noopener"><svg width="20" height="20" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar</a>'
+          + '<button class="btn btn--small" type="button"><svg width="20" height="20" aria-hidden="true"><use href="#i-denovo"/></svg>Versão nova</button>'
+        acoes.querySelector('a').href = link
+        acoes.querySelector('button').onclick = () => fazerVersao(repo.name, nome).catch(erro => mostrarErro('erro-publicar', erro.message))
+        const item = document.createElement('li')
+        item.append(texto, acoes)
+        lista.append(item)
+      }
+      elemento('meus-jogos').hidden = !jogos.length
+    }
+
+    // Guardando o jogo que está ganhando uma versão nova. Vazio, o formulário publica um jogo novo
+    let editando = null
+
+    // Abrindo o formulário no modo versão nova e buscando o código que está no ar e a data da versão anterior
+    async function fazerVersao(repositorio, nome) {
+      editando = { repositorio, nome, codigo: '', anterior: null }
+      limparFormulario()
+      elemento('titulo-novo').hidden = elemento('campo-nome').hidden = elemento('meus-jogos').hidden = true
+      elemento('titulo-versao').hidden = elemento('versao').hidden = elemento('botao-cancelar').hidden = false
+      elemento('nota-anterior').hidden = elemento('botao-baixar-codigo').hidden = true
+      elemento('botao-copiar').disabled = true
+      elemento('titulo-versao').textContent = `Versão nova de ${nome}`
+      elemento('texto-publicar').textContent = 'Publicar a versão nova'
+      falar(...BIT.versao)
+      elemento('formulario').scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+      const caminho = `/repos/${sessionStorage.getItem('usuario')}/${repositorio}`
+      const [arquivo, historico] = await Promise.all([
+        github(caminho + '/contents/index.html', { headers: { Accept: 'application/vnd.github.raw' } }),
+        github(caminho + '/commits?path=index.html&per_page=2'),
+      ])
+      if (editando?.repositorio !== repositorio) return
+      if (arquivo.ok) {
+        editando.codigo = await arquivo.text()
+        elemento('botao-copiar').disabled = false
+        elemento('botao-baixar-codigo').href = URL.createObjectURL(new Blob([editando.codigo], { type: 'text/html' }))
+        elemento('botao-baixar-codigo').download = repositorio + '.html'
+        elemento('botao-baixar-codigo').hidden = false
+      }
+      const versoes = historico.ok ? await historico.json() : []
+      if (versoes.length > 1) {
+        editando.anterior = versoes[1].sha
+        elemento('data-anterior').textContent = new Date(versoes[1].commit.author.date)
+          .toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        elemento('nota-anterior').hidden = false
+      }
+    }
+
+    // Copiando o código com uma frase para o Gemini guardar o jogo antes do pedido de mudança
+    elemento('botao-copiar').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText('Este é o código do meu jogo. Guarde ele: na próxima mensagem eu digo o que quero mudar.\n\n' + editando.codigo)
+        falar('feliz', 'Copiei! Agora cole no Canvas do Gemini e, na mensagem seguinte, peça as mudanças.')
+      } catch {
+        falar('ops', 'Não consegui copiar. Toque em Baixar o arquivo e envie o arquivo para o Gemini.')
+      }
+    }
+
+    function limparFormulario() {
+      for (const id of ['nome', 'arquivo', 'codigo']) elemento(id).value = ''
+      elemento('aceite').checked = false
+      elemento('etapas').hidden = true
+      mostrarErro('erro-publicar', '')
+      arquivoEscolhido()
+    }
+
+    // Voltando o formulário para publicar um jogo novo e atualizando a lista de Meus jogos
+    function modoNovo() {
+      editando = null
+      limparFormulario()
+      elemento('titulo-novo').hidden = elemento('campo-nome').hidden = false
+      elemento('titulo-versao').hidden = elemento('versao').hidden = elemento('botao-cancelar').hidden = true
+      elemento('texto-publicar').textContent = 'Publicar o jogo'
+      mostrar('publicar')
+      carregarJogos().catch(() => {})
     }
 
     // Mostrando o nome do arquivo escolhido, seja pelo toque ou arrastando para a zona
@@ -389,14 +537,17 @@ p, li, blockquote {
     // Transformando o nome do jogo no nome do repositório, sem acentos nem espaços
     const nomeDoRepositorio = nome => nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-    // Publicando: cria o repositório (ou reaproveita o de mesmo nome), envia o index.html e liga o GitHub Pages
+    // Um erro que já diz o que fazer e dispensa o "Tente de novo" do fim
+    const aviso = texto => Object.assign(new Error(texto), { aviso: true })
+
+    // Publicando: cria o espaço do jogo novo (ou segue um que ficou pela metade) e envia a versão
     elemento('botao-publicar').onclick = async () => {
-      const nome = elemento('nome').value.trim()
+      const nome = editando ? editando.nome : elemento('nome').value.trim()
       const arquivo = elemento('arquivo').files[0]
       const bytes = arquivo ? new Uint8Array(await arquivo.arrayBuffer()) : new TextEncoder().encode(elemento('codigo').value)
       const texto = new TextDecoder().decode(bytes)
-      const repositorio = nomeDoRepositorio(nome)
-      const dono = sessionStorage.getItem('usuario')
+      const repositorio = editando ? editando.repositorio : nomeDoRepositorio(nome)
+      const caminho = `/repos/${sessionStorage.getItem('usuario')}/${repositorio}`
       mostrarErro('erro-publicar', '')
       if (!repositorio) return mostrarErro('erro-publicar', 'Dê um nome ao jogo.')
       if (!/<(html|body|script)/i.test(texto)) return mostrarErro('erro-publicar', 'Escolha o arquivo HTML do jogo ou cole o código dele.')
@@ -405,45 +556,74 @@ p, li, blockquote {
       elemento('botao-publicar').disabled = true
       try {
         etapa(0)
-        const criacao = await github('/user/repos', {
-          method: 'POST',
-          body: JSON.stringify({ name: repositorio, description: `Jogo "${nome}", publicado com o GamificaPampa`, private: false }),
-        })
-        if (!criacao.ok && criacao.status !== 422) throw new Error('Não consegui criar o espaço do jogo.')
-        const caminho = `/repos/${dono}/${repositorio}`
-        const ramo = (await (await github(caminho)).json()).default_branch
-
-        // Enviando o jogo como index.html. Se ele já existia, o "sha" diz ao GitHub qual versão substituir
-        etapa(1)
-        const atual = await github(caminho + '/contents/index.html')
-        const sha = atual.ok ? (await atual.json()).sha : undefined
-        let binario = ''
-        for (const byte of bytes) binario += String.fromCharCode(byte)
-        const envio = await github(caminho + '/contents/index.html', {
-          method: 'PUT',
-          body: JSON.stringify({ message: `Publica o jogo ${nome}`, content: btoa(binario), sha }),
-        })
-        if (!envio.ok) throw new Error('Não consegui enviar o jogo.')
-
-        // Ligando o GitHub Pages. Logo após o envio o ramo pode não estar pronto, então tenta algumas vezes
-        etapa(2)
-        for (let tentativa = 1; tentativa <= 5; tentativa++) {
-          const pages = await github(caminho + '/pages', { method: 'POST', body: JSON.stringify({ source: { branch: ramo, path: '/' } }) })
-          if (pages.ok || pages.status === 409) break
-          if (tentativa === 5) throw new Error('Não consegui colocar o jogo no ar.')
-          await esperar(2000)
+        if (!editando) {
+          const criacao = await github('/user/repos', {
+            method: 'POST',
+            body: JSON.stringify({ name: repositorio, description: `Jogo "${nome}", publicado com o GamificaPampa`, private: false }),
+          })
+          // O nome já existe na conta: só segue se for um jogo do publicador que ficou sem o arquivo
+          if (criacao.status === 422) {
+            const existente = await (await github(caminho)).json()
+            if (!DESCRICAO.test(existente.description || '')) throw aviso('Já existe um repositório com esse nome na sua conta do GitHub. Escolha outro nome para o jogo.')
+            if ((await github(caminho + '/contents/index.html')).ok) throw aviso('Você já tem um jogo com esse nome. Para mudar ele, toque em Versão nova, em Meus jogos, ou escolha outro nome.')
+          } else if (!criacao.ok) throw new Error('Não consegui criar o espaço do jogo.')
         }
-        etapa(3)
-        await acompanhar(caminho, nome)
+        await enviarVersao(caminho, nome, bytes, editando ? `Versão nova do jogo ${nome}` : `Publica o jogo ${nome}`)
       } catch (erro) {
-        mostrarErro('erro-publicar', erro.message + ' Tente de novo.')
+        mostrarErro('erro-publicar', erro.aviso ? erro.message : erro.message + ' Tente de novo.')
       } finally {
         elemento('botao-publicar').disabled = false
       }
     }
 
+    // Voltando para a versão anterior: pega o arquivo daquela versão e envia de novo, como uma versão a mais
+    elemento('botao-anterior').onclick = async () => {
+      const { repositorio, nome, anterior } = editando
+      if (!confirm(`Voltar o jogo ${nome} para a versão de ${elemento('data-anterior').textContent}? A versão de agora continua guardada no GitHub.`)) return
+      const caminho = `/repos/${sessionStorage.getItem('usuario')}/${repositorio}`
+      mostrarErro('erro-publicar', '')
+      elemento('botao-anterior').disabled = elemento('botao-publicar').disabled = true
+      try {
+        etapa(0)
+        const resposta = await github(`${caminho}/contents/index.html?ref=${anterior}`, { headers: { Accept: 'application/vnd.github.raw' } })
+        if (!resposta.ok) throw new Error('Não achei a versão anterior.')
+        await enviarVersao(caminho, nome, new Uint8Array(await resposta.arrayBuffer()), `Volta o jogo ${nome} para a versão anterior`, 'A versão anterior voltou!')
+      } catch (erro) {
+        mostrarErro('erro-publicar', erro.message + ' Tente de novo.')
+      } finally {
+        elemento('botao-anterior').disabled = elemento('botao-publicar').disabled = false
+      }
+    }
+
+    // Enviando o jogo como index.html e ligando o GitHub Pages. O "sha" diz ao GitHub qual versão substituir
+    async function enviarVersao(caminho, nome, bytes, mensagem, titulo) {
+      const ramo = (await (await github(caminho)).json()).default_branch
+      etapa(1)
+      const atual = await github(caminho + '/contents/index.html')
+      const sha = atual.ok ? (await atual.json()).sha : undefined
+      let binario = ''
+      for (const byte of bytes) binario += String.fromCharCode(byte)
+      const envio = await github(caminho + '/contents/index.html', {
+        method: 'PUT',
+        body: JSON.stringify({ message: mensagem, content: btoa(binario), sha }),
+      })
+      if (!envio.ok) throw new Error('Não consegui enviar o jogo.')
+      const commit = (await envio.json()).commit.sha
+
+      // Ligando o GitHub Pages. Logo após o envio o ramo pode não estar pronto, então tenta algumas vezes
+      etapa(2)
+      for (let tentativa = 1; tentativa <= 5; tentativa++) {
+        const pages = await github(caminho + '/pages', { method: 'POST', body: JSON.stringify({ source: { branch: ramo, path: '/' } }) })
+        if (pages.ok || pages.status === 409) break
+        if (tentativa === 5) throw new Error('Não consegui colocar o jogo no ar.')
+        await esperar(2000)
+      }
+      etapa(3)
+      await acompanhar(caminho, nome, commit, titulo || (editando ? 'A versão nova está no ar!' : 'Seu jogo está no ar!'))
+    }
+
     // Mostrando o link e o QR Code e acompanhando o GitHub até o site ficar pronto (cerca de um minuto)
-    async function acompanhar(caminho, nome) {
+    async function acompanhar(caminho, nome, commit, titulo) {
       const link = (await (await github(caminho + '/pages')).json()).html_url
       elemento('link-jogo').href = elemento('botao-jogar').href = link
       elemento('link-jogo').textContent = link.replace('https://', '')
@@ -451,32 +631,33 @@ p, li, blockquote {
       elemento('qr').innerHTML = ''
       new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
       elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
+      elemento('titulo-pronto').textContent = titulo
       mostrar('pronto')
+      if (editando) falar('comemorando', `${titulo} O link e o QR Code são os mesmos. Quem já estava com o jogo aberto só precisa recarregar a página.`)
       elemento('estado').className = 'estado montando'
       elemento('estado').textContent = 'O GitHub está montando o site. Leva cerca de um minuto.'
+      // Esperando a montagem desta versão. A situação geral do site ainda pode ser a da versão anterior
       for (let tentativa = 0; tentativa < 36; tentativa++) {
-        const situacao = (await (await github(caminho + '/pages')).json()).status
-        if (situacao === 'built') {
+        const montagem = await github(caminho + '/pages/builds/latest')
+        const { commit: montado, status: situacao } = montagem.ok ? await montagem.json() : {}
+        if (montado === commit && situacao === 'built') {
           elemento('estado').className = 'estado'
           elemento('estado').textContent = 'Pronto! O jogo já abre pelo link e pelo QR Code.'
           return
         }
-        if (situacao === 'errored') {
+        if (montado === commit && situacao === 'errored') {
           elemento('estado').className = 'estado'
           elemento('estado').textContent = 'O GitHub não conseguiu montar o site. Publique o jogo de novo.'
           return
         }
         await esperar(5000)
       }
+      elemento('estado').className = 'estado'
+      elemento('estado').textContent = 'O GitHub está demorando mais que o normal. Abra o link daqui a alguns minutos.'
     }
 
-    elemento('botao-outro').onclick = () => {
-      for (const id of ['nome', 'arquivo', 'codigo']) elemento(id).value = ''
-      elemento('aceite').checked = false
-      elemento('etapas').hidden = true
-      arquivoEscolhido()
-      mostrar('publicar')
-    }
+    elemento('botao-outro').onclick = modoNovo
+    elemento('botao-cancelar').onclick = modoNovo
 
     iniciar().catch(erro => { mostrar('entrar'); mostrarErro('erro-entrar', erro.message) })
   </script>
