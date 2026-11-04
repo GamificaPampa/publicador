@@ -320,7 +320,7 @@ p, li, blockquote {
         <a class="btn btn--compartilhar" id="botao-whatsapp" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg>Mandar no WhatsApp</a>
         <a class="btn btn--baixar" id="botao-baixar-qr" download="qrcode-do-jogo.png"><svg width="22" height="22" aria-hidden="true"><use href="#i-baixar"/></svg>Baixar o QR Code</a>
       </div>
-      <div class="acoes centro"><button class="btn" type="button" id="botao-outro">Publicar outro jogo</button></div>
+      <div class="acoes centro"><button class="btn" type="button" id="botao-outro">Publicar outro jogo</button><a class="btn" href="/recursos-pedagogicos/professores/oficina-prompts/galeria.html#criados"><svg width="22" height="22" aria-hidden="true"><use href="#i-lista"/></svg>Ver na Galeria</a></div>
     </section>
   </main>
 
@@ -433,12 +433,25 @@ p, li, blockquote {
     const DESCRICAO = /^Jogo "(.*)", publicado com o GamificaPampa$/
     const linkDoJogo = repositorio => `https://${sessionStorage.getItem('usuario').toLowerCase()}.github.io/${repositorio}/`
 
+    // Anotando no navegador o jogo publicado, para a Galeria da Oficina mostrar em Criados por você.
+    // Fica só neste aparelho (mesmo endereço do site); só o nome, o link e a data, nada da conta do GitHub
+    function anotarJogo(nome, link) {
+      try {
+        const chave = 'gamificapampa-jogos-criados'
+        const lista = JSON.parse(localStorage.getItem(chave) || '[]').filter(jogo => jogo && jogo.link !== link)
+        lista.unshift({ nome, link, data: new Date().toISOString().slice(0, 10) })
+        localStorage.setItem(chave, JSON.stringify(lista.slice(0, 50)))
+      } catch {}
+    }
+
     // Listando em Meus jogos os jogos já publicados, do mais recente para o mais antigo
     async function carregarJogos() {
       const resposta = await github('/user/repos?type=owner&sort=updated&per_page=100')
       const jogos = resposta.ok ? (await resposta.json()).filter(repo => DESCRICAO.test(repo.description || '')) : []
       const lista = elemento('lista-jogos')
       lista.replaceChildren()
+      // Do mais antigo para o mais recente, para o último publicado ficar no topo de Criados por você
+      for (const repo of [...jogos].reverse()) anotarJogo(repo.description.match(DESCRICAO)[1], linkDoJogo(repo.name))
       for (const repo of jogos) {
         const nome = repo.description.match(DESCRICAO)[1]
         const link = linkDoJogo(repo.name)
@@ -650,6 +663,7 @@ p, li, blockquote {
     async function acompanhar(caminho, nome, commit, titulo) {
       const link = (await (await github(caminho + '/pages')).json()).html_url
       elemento('link-jogo').href = elemento('botao-jogar').href = link
+      anotarJogo(nome, link)
       elemento('link-jogo').textContent = link.replace('https://', '')
       elemento('botao-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(`Jogue "${nome}": ${link}`)
       elemento('qr').innerHTML = ''
