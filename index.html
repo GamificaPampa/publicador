@@ -114,6 +114,11 @@
     .versao .roteiro { margin-top: 4px; }
     .versao .nota .btn { margin-top: 10px; }
 
+    /* Publicar sem conta: o código de edição aparece uma vez, grande, para anotar */
+    .codigo-edicao { display: inline-block; margin: 2px 0 8px; padding: 4px 14px; border: 3px solid var(--ink); border-radius: 14px; background: var(--white); font: 700 clamp(20px, 5vw, 26px)/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .06em; }
+    .resultado .nota.saida { text-align: left; }
+    .trazer { display: grid; gap: 4px; }
+
     @media (max-width: 560px) {
       .bit { flex-direction: column; }
       .bit .bubble::before, .bit .bubble::after { display: none; }
@@ -183,7 +188,83 @@ p, li, blockquote {
       <p class="bubble anima-balao" id="fala" aria-live="polite">Oi! Eu coloco o seu jogo na internet, com um link e um QR Code para a turma. Primeiro, entre com o GitHub.</p>
     </div>
 
+    <!-- Publicar sem conta: só aparece quando JOGOS_SEM_CONTA.url tem o endereço do Worker (worker-jogos/README.md) -->
+    <div class="tela pilha" id="sem-conta" hidden>
+      <section class="card" id="sc-meus-jogos" hidden>
+        <h2>Meus jogos</h2>
+        <p>Os jogos publicados neste aparelho. Para melhorar um sem mudar o link nem o QR Code, toque em <b>Versão nova</b>.</p>
+        <ul class="jogos" id="sc-lista"></ul>
+      </section>
+
+      <section class="card" id="sc-formulario">
+        <h2 id="sc-titulo-novo">Envie o jogo</h2>
+        <h2 id="sc-titulo-versao" hidden></h2>
+        <p id="sc-explica">Não precisa de conta: dê um nome, envie o arquivo e ganhe o link e o QR Code na hora.</p>
+
+        <div class="versao" id="sc-versao" hidden>
+          <ol class="roteiro">
+            <li><span class="figura" style="--c: var(--yellow)"><span>1</span><svg aria-hidden="true"><use href="#i-copiar"/></svg></span>
+              <div><p>Copie o código do jogo que está no ar.</p>
+                <div class="acoes perto">
+                  <button class="btn btn--small" type="button" id="sc-copiar" disabled><svg width="20" height="20" aria-hidden="true"><use href="#i-copiar"/></svg>Copiar o código</button>
+                  <a class="btn btn--small btn--baixar" id="sc-baixar-codigo" download="jogo.html" hidden><svg width="20" height="20" aria-hidden="true"><use href="#i-baixar"/></svg>Baixar o arquivo</a>
+                </div></div></li>
+            <li><span class="figura" style="--c: var(--blue)"><span>2</span><b>+</b></span>
+              <div><p>No Gemini, abra o <b>Canvas</b> (no <b>+</b>, em Mais ferramentas), cole o código e envie.</p></div></li>
+            <li><span class="figura" style="--c: var(--pink)"><span>3</span><b>Aa</b></span>
+              <div><p>Na mensagem seguinte, peça só o que quer mudar. Por exemplo: <i>Acrescente uma fase mais difícil e mantenha o resto do jogo.</i></p></div></li>
+            <li><span class="figura" style="--c: var(--mint)"><span>4</span><svg aria-hidden="true"><use href="#i-enviar"/></svg></span>
+              <div><p>Quando ficar bom, envie o jogo novo aqui embaixo, pelo arquivo ou colando o código.</p></div></li>
+          </ol>
+          <p class="nota" id="sc-nota-anterior" hidden>Não gostou da última versão? As anteriores ficam guardadas, e você pode voltar para a de <b id="sc-data-anterior"></b>.<br>
+            <button class="btn btn--small" type="button" id="sc-anterior"><svg width="20" height="20" aria-hidden="true"><use href="#i-voltar"/></svg>Voltar para a versão anterior</button></p>
+        </div>
+
+        <div id="sc-campo-nome">
+          <label class="campo" for="sc-nome">Nome do jogo</label>
+          <input type="text" id="sc-nome" placeholder="Por exemplo: Pizzaria das Frações" maxlength="60" autocomplete="off">
+        </div>
+
+        <label class="campo" for="sc-arquivo">Arquivo do jogo</label>
+        <label class="zona" id="sc-zona">
+          <svg aria-hidden="true"><use href="#i-enviar"/></svg>
+          <span id="sc-zona-texto">Toque para escolher o arquivo <b>.html</b> ou arraste ele para cá</span>
+          <input type="file" id="sc-arquivo" accept=".html,.htm,text/html">
+        </label>
+
+        <details id="sc-colar">
+          <summary>Prefiro colar o código do jogo</summary>
+          <label class="campo" for="sc-codigo">Código do jogo</label>
+          <textarea id="sc-codigo" placeholder="&lt;!doctype html&gt; ..."></textarea>
+        </details>
+
+        <label class="aceite"><input type="checkbox" id="sc-aceite"><span>O jogo não tem nomes, fotos ou dados de alunos, e o conteúdo é próprio para a turma.</span></label>
+
+        <div class="acoes">
+          <button class="btn btn--big btn--compartilhar" type="button" id="sc-publicar"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg><span id="sc-texto-publicar">Publicar o jogo</span></button>
+          <button class="btn" type="button" id="sc-cancelar" hidden>Cancelar</button>
+        </div>
+        <p class="erro" id="sc-erro" hidden></p>
+
+        <details id="sc-outro-aparelho">
+          <summary>Publicou em outro aparelho?</summary>
+          <p>Com o link do jogo e o código de edição que você anotou, o jogo aparece em Meus jogos também aqui.</p>
+          <div class="trazer">
+            <label class="campo" for="sc-trazer-link">Link do jogo</label>
+            <input type="text" id="sc-trazer-link" autocomplete="off" placeholder="jogos.gamificapampa.workers.dev/...">
+            <label class="campo" for="sc-trazer-codigo">Código de edição</label>
+            <input type="text" id="sc-trazer-codigo" autocomplete="off" placeholder="xxxx-xxxx-xxxx">
+          </div>
+          <div class="acoes"><button class="btn btn--small" type="button" id="sc-trazer"><svg width="20" height="20" aria-hidden="true"><use href="#i-lista"/></svg>Trazer o jogo</button></div>
+          <p class="erro" id="sc-erro-trazer" hidden></p>
+        </details>
+
+        <p class="nota">Prefere guardar o jogo na sua conta do GitHub? <button class="btn btn--small" type="button" id="sc-github"><svg width="20" height="20" aria-hidden="true"><use href="#i-github"/></svg>Publicar pelo GitHub</button></p>
+      </section>
+    </div>
+
     <section class="card tela" id="entrar">
+      <p class="nota" id="voltar-sem-conta" hidden>Não quer criar conta no GitHub? <button class="btn btn--small" type="button" id="botao-sem-conta"><svg width="20" height="20" aria-hidden="true"><use href="#i-enviar"/></svg>Publicar sem conta</button></p>
       <div class="nota saida" id="aviso-saida" hidden>
         <p><b>Você saiu do publicador.</b> O navegador ainda está conectado ao GitHub. Se este computador é da escola ou de outra pessoa, saia também do GitHub: senão, quem tocar em Entrar com o GitHub entra na sua conta.</p>
         <p>Na página que abrir, toque em <b>Sign out</b> <span class="trad">(sair)</span>.</p>
@@ -315,6 +396,12 @@ p, li, blockquote {
       <p><a class="link" id="link-jogo" target="_blank" rel="noopener"></a></p>
       <div class="qr" id="qr" role="img" aria-label="QR Code do jogo"></div>
       <p class="estado montando" id="estado">O GitHub está montando o site. Leva cerca de um minuto.</p>
+      <div class="nota saida" id="sc-codigo-caixa" hidden>
+        <p><b>Anote o código de edição deste jogo:</b></p>
+        <p><span class="codigo-edicao" id="sc-codigo-mostrar"></span></p>
+        <p>Ele aparece só agora. Fica guardado neste aparelho, mas, para fazer uma versão nova em outro computador ou celular, você vai precisar dele.</p>
+        <button class="btn btn--small" type="button" id="sc-copiar-codigo"><svg width="20" height="20" aria-hidden="true"><use href="#i-copiar"/></svg>Copiar o código de edição</button>
+      </div>
       <div class="acoes centro">
         <a class="btn btn--jogar" id="botao-jogar" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar</a>
         <a class="btn btn--compartilhar" id="botao-whatsapp" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg>Mandar no WhatsApp</a>
@@ -331,6 +418,11 @@ p, li, blockquote {
     const CLIENT_ID = 'Ov23lifzY8sJFjQQPClf'
     const WORKER = 'https://publicador-gamificapampa.gamificapampa.workers.dev/'
     const ENDERECO_DE_VOLTA = 'https://gamificapampa.github.io/publicador/'
+    // Publicar sem conta: o endereço do Worker dos jogos (worker-jogos/README.md), com a barra no fim.
+    // Vazio, a página fica só com o caminho pelo GitHub. Ligar é decisão do Paulo
+    const JOGOS_SEM_CONTA = { url: '' }
+    // O caminho em uso: 'github' ou 'sem-conta'
+    let fluxo = 'github'
     const esperar = milissegundos => new Promise(resolver => setTimeout(resolver, milissegundos))
     const elemento = id => document.getElementById(id)
 
@@ -340,6 +432,7 @@ p, li, blockquote {
       publicar: ['pensando', 'Agora me mande o jogo. Pode ser o arquivo HTML ou o código que a IA criou.'],
       pronto: ['comemorando', 'Seu jogo está no ar! Mande o link para a turma ou projete o QR Code.'],
       versao: ['pensando', 'Vamos fazer a versão nova! Copie o código, peça as mudanças no Gemini e me mande o jogo de volta. O link e o QR Code continuam os mesmos.'],
+      'sem-conta': ['acenando', 'Oi! Eu coloco o seu jogo na internet, com um link e um QR Code para a turma. Não precisa de conta: é só dar um nome e enviar o arquivo.'],
     }
 
     // Trocando a pose do Bit e tocando de novo a animação do balão a cada fala
@@ -355,11 +448,19 @@ p, li, blockquote {
     // Mostrando só a tela pedida e marcando os passos já vencidos
     function mostrar(id) {
       for (const tela of document.querySelectorAll('.tela')) tela.hidden = tela.id !== id
-      elemento('botao-meus-jogos').hidden = elemento('botao-sair').hidden = id === 'entrar'
+      // Sem conta não há login: some o passo Entrar e o botão Sair
+      const semLogin = fluxo === 'sem-conta'
+      elemento('botao-meus-jogos').hidden = id === 'entrar' || id === 'sem-conta'
+      elemento('botao-sair').hidden = id === 'entrar' || semLogin
+      elemento('voltar-sem-conta').hidden = !JOGOS_SEM_CONTA.url
+      const passoAtual = id === 'sem-conta' ? 'publicar' : id
       const ordem = ['entrar', 'publicar', 'pronto']
+      let numero = 0
       for (const passo of document.querySelectorAll('.passos li')) {
-        passo.classList.toggle('atual', passo.dataset.tela === id)
-        passo.classList.toggle('feito', ordem.indexOf(passo.dataset.tela) < ordem.indexOf(id))
+        passo.hidden = semLogin && passo.dataset.tela === 'entrar'
+        if (!passo.hidden) passo.querySelector('span').textContent = ++numero
+        passo.classList.toggle('atual', passo.dataset.tela === passoAtual)
+        passo.classList.toggle('feito', ordem.indexOf(passo.dataset.tela) < ordem.indexOf(passoAtual))
       }
       falar(...BIT[id])
     }
@@ -409,6 +510,8 @@ p, li, blockquote {
     // Trocando, na volta do GitHub, o código pelo token no Worker e limpando o endereço
     async function iniciar() {
       const parametros = new URLSearchParams(location.search)
+      // Quem chega da máquina de prompts traz o jogo no sessionStorage; o endereço fica limpo
+      if (parametros.get('origem') === 'maquina') history.replaceState(null, '', location.pathname)
       if (parametros.has('code')) {
         history.replaceState(null, '', location.pathname)
         if (parametros.get('state') !== sessionStorage.getItem('estado')) throw new Error('O login não foi confirmado. Tente de novo.')
@@ -421,12 +524,43 @@ p, li, blockquote {
         if (!dados.access_token) throw new Error('O login não deu certo. Tente de novo.')
         sessionStorage.setItem('token', dados.access_token)
       }
-      if (!sessionStorage.getItem('token')) return mostrar('entrar')
+      // Ligado o caminho sem conta, ele é o primeiro. Quem já entrou com o GitHub nesta aba continua lá
+      if (JOGOS_SEM_CONTA.url && !sessionStorage.getItem('token')) return modoSemConta()
+      fluxo = 'github'
+      if (!sessionStorage.getItem('token')) {
+        mostrar('entrar')
+        // O jogo da máquina espera o login: ele fica guardado na aba durante a ida ao GitHub
+        if (jogoDaMaquina()) falar('acenando', 'O jogo que você criou na máquina já está guardado aqui. Entre com o GitHub para publicar.')
+        return
+      }
       const usuario = await (await github('/user')).json()
       sessionStorage.setItem('usuario', usuario.login)
       elemento('usuario').textContent = (usuario.name || usuario.login).split(' ')[0]
       mostrar('publicar')
+      carregarDaMaquina('')
       carregarJogos().catch(() => {})
+    }
+
+    // O jogo que a máquina de prompts mandou para publicar ({ nome, html }), ou nada
+    function jogoDaMaquina() {
+      try {
+        const jogo = JSON.parse(sessionStorage.getItem('gp-publicador:jogo') || 'null')
+        return jogo && typeof jogo.html === 'string' && jogo.html.trim() ? jogo : null
+      } catch {
+        return null
+      }
+    }
+
+    // Pondo o jogo da máquina no formulário do caminho em uso ('' é o do GitHub, 'sc-' o sem conta) e apagando a chave
+    function carregarDaMaquina(prefixo) {
+      const jogo = jogoDaMaquina()
+      if (!jogo) return false
+      sessionStorage.removeItem('gp-publicador:jogo')
+      elemento(prefixo + 'nome').value = String(jogo.nome || '').trim().slice(0, 60)
+      elemento(prefixo + 'codigo').value = jogo.html
+      elemento(prefixo + 'codigo').closest('details').open = true
+      falar('feliz', 'O jogo que você criou na máquina já está aqui. Confira o nome, marque o aviso e toque em Publicar o jogo.')
+      return true
     }
 
     // Reconhecendo pela descrição os repositórios que o publicador criou e tirando dela o nome do jogo
@@ -541,6 +675,11 @@ p, li, blockquote {
 
     // Levando à lista de Meus jogos de qualquer tela. Sem jogo publicado, o Bit explica onde eles vão aparecer
     elemento('botao-meus-jogos').onclick = async () => {
+      if (fluxo === 'sem-conta') {
+        modoSemConta()
+        if (elemento('sc-meus-jogos').hidden) return falar('pensando', 'Você ainda não publicou jogos neste aparelho. Quando publicar o primeiro, ele aparece aqui em Meus jogos.')
+        return elemento('sc-meus-jogos').scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
       await (editando || elemento('publicar').hidden ? modoNovo() : carregarJogos().catch(() => {}))
       if (elemento('meus-jogos').hidden) return falar('pensando', 'Você ainda não tem jogos publicados. Quando publicar o primeiro, ele aparece aqui em Meus jogos.')
       elemento('meus-jogos').scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -660,18 +799,24 @@ p, li, blockquote {
     }
 
     // Mostrando o link e o QR Code e acompanhando o GitHub até o site ficar pronto (cerca de um minuto)
-    async function acompanhar(caminho, nome, commit, titulo) {
-      const link = (await (await github(caminho + '/pages')).json()).html_url
+    // A tela do resultado, igual nos dois caminhos: link, QR Code, WhatsApp e a anotação para a Galeria
+    function mostrarPronto(nome, link, titulo, versaoNova) {
       elemento('link-jogo').href = elemento('botao-jogar').href = link
       anotarJogo(nome, link)
-      elemento('link-jogo').textContent = link.replace('https://', '')
+      elemento('link-jogo').textContent = link.replace(/^https?:\/\//, '')
       elemento('botao-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(`Jogue "${nome}": ${link}`)
       elemento('qr').innerHTML = ''
       new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
       elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
       elemento('titulo-pronto').textContent = titulo
+      elemento('sc-codigo-caixa').hidden = true
       mostrar('pronto')
-      if (editando) falar('comemorando', `${titulo} O link e o QR Code são os mesmos. Quem já estava com o jogo aberto só precisa recarregar a página.`)
+      if (versaoNova) falar('comemorando', `${titulo} O link e o QR Code são os mesmos. Quem já estava com o jogo aberto só precisa recarregar a página.`)
+    }
+
+    async function acompanhar(caminho, nome, commit, titulo) {
+      const link = (await (await github(caminho + '/pages')).json()).html_url
+      mostrarPronto(nome, link, titulo, Boolean(editando))
       elemento('estado').className = 'estado montando'
       elemento('estado').textContent = 'O GitHub está montando o site. Leva cerca de um minuto.'
       // Esperando a montagem desta versão. A situação geral do site ainda pode ser a da versão anterior
@@ -694,7 +839,7 @@ p, li, blockquote {
       elemento('estado').textContent = 'O GitHub está demorando mais que o normal. Abra o link daqui a alguns minutos.'
     }
 
-    elemento('botao-outro').onclick = modoNovo
+    elemento('botao-outro').onclick = () => fluxo === 'sem-conta' ? modoSemConta() : modoNovo()
 
     // Saindo: apaga o login desta aba e lembra que o navegador continua conectado ao GitHub
     elemento('botao-sair').onclick = () => {
@@ -707,6 +852,236 @@ p, li, blockquote {
       elemento('aviso-saida').hidden = false
       falar('acenando', 'Até a próxima! Se o computador for da escola, saia também do GitHub pelo aviso aqui embaixo.')
       scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    // ===== Publicar sem conta =====
+    // O jogo vai para o Worker dos jogos (worker-jogos/), que devolve o link e um código de edição.
+    // Meus jogos são os deste aparelho: o nome, o link, o código de edição e a data, só no navegador
+    const CHAVE_SEM_CONTA = 'gamificapampa-jogos-sem-conta'
+    const MAXIMO_DO_JOGO = 2 * 1024 * 1024
+    let scEditando = null
+
+    function jogosDoAparelho() {
+      try {
+        return JSON.parse(localStorage.getItem(CHAVE_SEM_CONTA) || '[]').filter(jogo => jogo && jogo.id && jogo.codigo)
+      } catch {
+        return []
+      }
+    }
+    function guardarNoAparelho(jogo) {
+      try {
+        const lista = jogosDoAparelho().filter(outro => outro.id !== jogo.id)
+        lista.unshift({ ...jogo, data: new Date().toISOString().slice(0, 10) })
+        localStorage.setItem(CHAVE_SEM_CONTA, JSON.stringify(lista.slice(0, 50)))
+      } catch {}
+    }
+
+    // Chamando o Worker dos jogos. O erro dele já vem em português, pronto para o professor ler
+    async function jogosApi(acao, corpo) {
+      let resposta
+      try {
+        resposta = await fetch(new URL(acao, JOGOS_SEM_CONTA.url), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) })
+      } catch {
+        throw new Error('Não consegui falar com o publicador. Confira a internet.')
+      }
+      const dados = await resposta.json().catch(() => ({}))
+      if (!resposta.ok) throw aviso(dados.erro || 'Não deu certo.')
+      return dados
+    }
+
+    // Mostrando o nome do arquivo escolhido, pelo toque ou arrastando para a zona
+    function scArquivoEscolhido() {
+      const arquivo = elemento('sc-arquivo').files[0]
+      elemento('sc-zona').classList.toggle('cheia', Boolean(arquivo))
+      elemento('sc-zona-texto').innerHTML = 'Toque para escolher o arquivo <b>.html</b> ou arraste ele para cá'
+      if (arquivo) {
+        elemento('sc-zona-texto').replaceChildren(Object.assign(document.createElement('b'), { textContent: arquivo.name }), ' pronto para enviar')
+      }
+    }
+    elemento('sc-arquivo').onchange = scArquivoEscolhido
+    elemento('sc-zona').ondragover = evento => { evento.preventDefault(); elemento('sc-zona').classList.add('arrastando') }
+    elemento('sc-zona').ondragleave = () => elemento('sc-zona').classList.remove('arrastando')
+    elemento('sc-zona').ondrop = evento => {
+      evento.preventDefault()
+      elemento('sc-zona').classList.remove('arrastando')
+      elemento('sc-arquivo').files = evento.dataTransfer.files
+      scArquivoEscolhido()
+    }
+
+    function scLimpar() {
+      for (const id of ['sc-nome', 'sc-arquivo', 'sc-codigo']) elemento(id).value = ''
+      elemento('sc-aceite').checked = false
+      elemento('sc-colar').open = false
+      mostrarErro('sc-erro', '')
+      scArquivoEscolhido()
+    }
+
+    // Abrindo o caminho sem conta para um jogo novo, com a lista de Meus jogos deste aparelho
+    function modoSemConta() {
+      fluxo = 'sem-conta'
+      scEditando = null
+      scLimpar()
+      elemento('sc-titulo-novo').hidden = elemento('sc-campo-nome').hidden = elemento('sc-explica').hidden = false
+      elemento('sc-titulo-versao').hidden = elemento('sc-versao').hidden = elemento('sc-cancelar').hidden = true
+      elemento('sc-texto-publicar').textContent = 'Publicar o jogo'
+      mostrar('sem-conta')
+      listarSemConta()
+      carregarDaMaquina('sc-')
+    }
+    elemento('sc-cancelar').onclick = modoSemConta
+    elemento('botao-sem-conta').onclick = modoSemConta
+    elemento('sc-github').onclick = () => {
+      fluxo = 'github'
+      if (sessionStorage.getItem('token')) return modoNovo()
+      mostrar('entrar')
+      scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    function listarSemConta() {
+      const jogos = jogosDoAparelho()
+      const lista = elemento('sc-lista')
+      lista.replaceChildren()
+      for (const jogo of jogos) {
+        const texto = document.createElement('div')
+        texto.append(
+          Object.assign(document.createElement('b'), { textContent: jogo.nome }),
+          Object.assign(document.createElement('a'), { href: jogo.link, target: '_blank', rel: 'noopener', textContent: jogo.link.replace(/^https?:\/\//, '') }),
+        )
+        const acoes = Object.assign(document.createElement('div'), { className: 'acoes' })
+        acoes.innerHTML = '<a class="btn btn--small btn--jogar" target="_blank" rel="noopener"><svg width="20" height="20" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar</a>'
+          + '<button class="btn btn--small" type="button"><svg width="20" height="20" aria-hidden="true"><use href="#i-denovo"/></svg>Versão nova</button>'
+        acoes.querySelector('a').href = jogo.link
+        acoes.querySelector('button').onclick = () => scVersao(jogo).catch(erro => mostrarErro('sc-erro', erro.message))
+        const item = document.createElement('li')
+        item.append(texto, acoes)
+        lista.append(item)
+      }
+      elemento('sc-meus-jogos').hidden = !jogos.length
+    }
+
+    // Abrindo a versão nova: busca no Worker o código que está no ar e a data da versão anterior
+    async function scVersao(jogo) {
+      scEditando = { ...jogo, html: '' }
+      scLimpar()
+      elemento('sc-titulo-novo').hidden = elemento('sc-campo-nome').hidden = elemento('sc-explica').hidden = elemento('sc-meus-jogos').hidden = true
+      elemento('sc-titulo-versao').hidden = elemento('sc-versao').hidden = elemento('sc-cancelar').hidden = false
+      elemento('sc-nota-anterior').hidden = elemento('sc-baixar-codigo').hidden = true
+      elemento('sc-copiar').disabled = true
+      elemento('sc-titulo-versao').textContent = `Versão nova de ${jogo.nome}`
+      elemento('sc-texto-publicar').textContent = 'Publicar a versão nova'
+      falar(...BIT.versao)
+      elemento('sc-formulario').scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+      const dados = await jogosApi('jogo', { id: jogo.id, codigo: jogo.codigo })
+      if (scEditando?.id !== jogo.id) return
+      scEditando.html = dados.html
+      elemento('sc-copiar').disabled = !dados.html
+      elemento('sc-baixar-codigo').href = URL.createObjectURL(new Blob([dados.html], { type: 'text/html' }))
+      elemento('sc-baixar-codigo').download = nomeDoRepositorio(jogo.nome || 'jogo') + '.html'
+      elemento('sc-baixar-codigo').hidden = !dados.html
+      if (dados.versoes.length > 1) {
+        elemento('sc-data-anterior').textContent = new Date(dados.versoes.at(-2))
+          .toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        elemento('sc-nota-anterior').hidden = false
+      }
+    }
+
+    elemento('sc-copiar').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText('Este é o código do meu jogo. Guarde ele: na próxima mensagem eu digo o que quero mudar.\n\n' + scEditando.html)
+        falar('feliz', 'Copiei! Agora cole no Canvas do Gemini e, na mensagem seguinte, peça as mudanças.')
+      } catch {
+        falar('ops', 'Não consegui copiar. Toque em Baixar o arquivo e envie o arquivo para o Gemini.')
+      }
+    }
+
+    // Mostrando o resultado sem conta: o jogo já abre na hora, sem esperar montagem
+    function scPronto(dados, titulo, codigo) {
+      mostrarPronto(dados.nome, dados.link, titulo, !codigo)
+      elemento('estado').className = 'estado'
+      elemento('estado').textContent = 'Pronto! O jogo já abre pelo link e pelo QR Code.'
+      if (codigo) {
+        elemento('sc-codigo-mostrar').textContent = codigo
+        elemento('sc-codigo-caixa').hidden = false
+        falar('comemorando', 'Seu jogo está no ar! Anote o código de edição: com ele você faz uma versão nova, até em outro aparelho.')
+      }
+    }
+
+    elemento('sc-copiar-codigo').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(elemento('sc-codigo-mostrar').textContent)
+        falar('feliz', 'Copiei o código de edição. Guarde num lugar seguro, como as suas anotações.')
+      } catch {
+        falar('ops', 'Não consegui copiar. Anote o código no caderno.')
+      }
+    }
+
+    // Publicando sem conta: um jogo novo ou a versão nova de um jogo deste aparelho
+    elemento('sc-publicar').onclick = async () => {
+      const nome = scEditando ? scEditando.nome : elemento('sc-nome').value.trim()
+      const arquivo = elemento('sc-arquivo').files[0]
+      const html = arquivo ? await arquivo.text() : elemento('sc-codigo').value
+      mostrarErro('sc-erro', '')
+      if (!nome) return mostrarErro('sc-erro', 'Dê um nome ao jogo.')
+      if (!/<(html|body|script)/i.test(html)) return mostrarErro('sc-erro', 'Escolha o arquivo HTML do jogo ou cole o código dele.')
+      if (new TextEncoder().encode(html).length > MAXIMO_DO_JOGO) return mostrarErro('sc-erro', 'O jogo passa de 2 MB. Peça à IA uma versão mais leve, sem imagens dentro do arquivo.')
+      if (!elemento('sc-aceite').checked) return mostrarErro('sc-erro', 'Confirme que o jogo não tem dados de alunos.')
+
+      elemento('sc-publicar').disabled = true
+      try {
+        if (scEditando) {
+          const dados = await jogosApi('versao', { id: scEditando.id, codigo: scEditando.codigo, html })
+          guardarNoAparelho({ id: dados.id, nome: dados.nome, link: dados.link, codigo: scEditando.codigo })
+          scPronto(dados, 'A versão nova está no ar!')
+        } else {
+          const dados = await jogosApi('publicar', { nome, html })
+          guardarNoAparelho({ id: dados.id, nome: dados.nome, link: dados.link, codigo: dados.codigo })
+          scPronto(dados, 'Seu jogo está no ar!', dados.codigo)
+        }
+      } catch (erro) {
+        mostrarErro('sc-erro', erro.aviso ? erro.message : erro.message + ' Tente de novo.')
+      } finally {
+        elemento('sc-publicar').disabled = false
+      }
+    }
+
+    // Voltando para a versão anterior: ela volta como uma versão a mais, e a de agora continua guardada
+    elemento('sc-anterior').onclick = async () => {
+      const { id, nome, codigo } = scEditando
+      if (!confirm(`Voltar o jogo ${nome} para a versão de ${elemento('sc-data-anterior').textContent}? A versão de agora continua guardada.`)) return
+      mostrarErro('sc-erro', '')
+      elemento('sc-anterior').disabled = elemento('sc-publicar').disabled = true
+      try {
+        const dados = await jogosApi('voltar', { id, codigo })
+        scPronto(dados, 'A versão anterior voltou!')
+      } catch (erro) {
+        mostrarErro('sc-erro', erro.aviso ? erro.message : erro.message + ' Tente de novo.')
+      } finally {
+        elemento('sc-anterior').disabled = elemento('sc-publicar').disabled = false
+      }
+    }
+
+    // Trazendo para este aparelho um jogo publicado em outro, com o link e o código de edição
+    elemento('sc-trazer').onclick = async () => {
+      const id = (elemento('sc-trazer-link').value.trim().toLowerCase().match(/([a-z2-9]{8})\/?(?:[?#].*)?$/) || [])[1]
+      const codigo = elemento('sc-trazer-codigo').value.trim().toLowerCase()
+      mostrarErro('sc-erro-trazer', '')
+      if (!id) return mostrarErro('sc-erro-trazer', 'Cole o link do jogo, como ele aparece embaixo do QR Code.')
+      if (!codigo) return mostrarErro('sc-erro-trazer', 'Escreva o código de edição que você anotou.')
+      elemento('sc-trazer').disabled = true
+      try {
+        const dados = await jogosApi('jogo', { id, codigo })
+        guardarNoAparelho({ id: dados.id, nome: dados.nome, link: dados.link, codigo })
+        elemento('sc-trazer-link').value = elemento('sc-trazer-codigo').value = ''
+        elemento('sc-outro-aparelho').open = false
+        listarSemConta()
+        falar('feliz', `Pronto! ${dados.nome} está em Meus jogos. Toque em Versão nova para mudar o jogo.`)
+        elemento('sc-meus-jogos').scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } catch (erro) {
+        mostrarErro('sc-erro-trazer', erro.message)
+      } finally {
+        elemento('sc-trazer').disabled = false
+      }
     }
 
     iniciar().catch(erro => { mostrar('entrar'); mostrarErro('erro-entrar', erro.message) })
