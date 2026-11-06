@@ -1,0 +1,22 @@
+# Configuração do Worker dos jogos sem conta. Como ligar está no README.md desta pasta.
+# Com o nome "jogos", na conta da Cloudflare do publicador, o endereço fica jogos.gamificapampa.workers.dev
+name = "jogos"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Para testar no servidor local, por exemplo: "http://127.0.0.1:8802,http://localhost:8802"
+ORIGENS_EXTRA = ""
+
+# Onde ficam os jogos. Crie o bucket uma vez com: npx wrangler r2 bucket create gamificapampa-jogos
+[[r2_buckets]]
+binding = "JOGOS"
+bucket_name = "gamificapampa-jogos"
+
+# Até 10 envios por minuto para cada endereço de internet (publicar, versão nova, voltar e denunciar).
+# Abrir um jogo não conta. Na oficina, a sala inteira sai pela internet da escola com o mesmo endereço,
+# por isso o limite é folgado para uma turma publicando junto
+[[ratelimits]]
+name = "LIMITE"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
