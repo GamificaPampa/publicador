@@ -814,8 +814,13 @@ p, li, blockquote {
       elemento('link-jogo').textContent = link.replace(/^https?:\/\//, '')
       elemento('botao-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(`Jogue "${nome}": ${link}`)
       elemento('qr').innerHTML = ''
-      new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
-      elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
+      // Se a internet da escola bloquear a biblioteca do QR Code, o jogo já está no ar: mostra o link sem o QR
+      const temQr = typeof QRCode === 'function'
+      elemento('qr').hidden = elemento('botao-baixar-qr').hidden = !temQr
+      if (temQr) {
+        new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
+        elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
+      }
       elemento('titulo-pronto').textContent = titulo
       elemento('sc-codigo-caixa').hidden = true
       mostrar('pronto')
