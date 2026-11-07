@@ -473,10 +473,15 @@ p, li, blockquote {
 
     // Chamando a API do GitHub com o token do professor. Se o login venceu, volta para a tela de entrar
     async function github(caminho, opcoes = {}) {
-      const resposta = await fetch('https://api.github.com' + caminho, {
-        ...opcoes,
-        headers: { Authorization: 'Bearer ' + sessionStorage.getItem('token'), Accept: 'application/vnd.github+json', ...opcoes.headers },
-      })
+      let resposta
+      try {
+        resposta = await fetch('https://api.github.com' + caminho, {
+          ...opcoes,
+          headers: { Authorization: 'Bearer ' + sessionStorage.getItem('token'), Accept: 'application/vnd.github+json', ...opcoes.headers },
+        })
+      } catch {
+        throw new Error('Não consegui falar com o GitHub. Confira a internet.')
+      }
       if (resposta.status === 401) {
         sessionStorage.removeItem('token')
         mostrar('entrar')
@@ -519,8 +524,8 @@ p, li, blockquote {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: parametros.get('code'), redirect_uri: ENDERECO_DE_VOLTA }),
-        })
-        const dados = await resposta.json()
+        }).catch(() => { throw new Error('Não consegui falar com o GitHub. Confira a internet e entre de novo.') })
+        const dados = await resposta.json().catch(() => ({}))
         if (!dados.access_token) throw new Error('O login não deu certo. Tente de novo.')
         sessionStorage.setItem('token', dados.access_token)
       }
