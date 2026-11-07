@@ -210,7 +210,7 @@ p, li, blockquote {
                   <a class="btn btn--small btn--baixar" id="sc-baixar-codigo" download="jogo.html" hidden><svg width="20" height="20" aria-hidden="true"><use href="#i-baixar"/></svg>Baixar o arquivo</a>
                 </div></div></li>
             <li><span class="figura" style="--c: var(--blue)"><span>2</span><b>+</b></span>
-              <div><p>No Gemini, abra o <b>Canvas</b> (no <b>+</b>, em Mais ferramentas), cole o código e envie.</p></div></li>
+              <div><p>No ChatGPT, abra o <b>Canvas</b> (no <b>+</b> da caixa de mensagem), cole o código e envie.</p></div></li>
             <li><span class="figura" style="--c: var(--pink)"><span>3</span><b>Aa</b></span>
               <div><p>Na mensagem seguinte, peça só o que quer mudar. Por exemplo: <i>Acrescente uma fase mais difícil e mantenha o resto do jogo.</i></p></div></li>
             <li><span class="figura" style="--c: var(--mint)"><span>4</span><svg aria-hidden="true"><use href="#i-enviar"/></svg></span>
@@ -347,7 +347,7 @@ p, li, blockquote {
                 <a class="btn btn--small btn--baixar" id="botao-baixar-codigo" download="jogo.html" hidden><svg width="20" height="20" aria-hidden="true"><use href="#i-baixar"/></svg>Baixar o arquivo</a>
               </div></div></li>
           <li><span class="figura" style="--c: var(--blue)"><span>2</span><b>+</b></span>
-            <div><p>No Gemini, abra o <b>Canvas</b> (no <b>+</b>, em Mais ferramentas), cole o código e envie.</p></div></li>
+            <div><p>No ChatGPT, abra o <b>Canvas</b> (no <b>+</b> da caixa de mensagem), cole o código e envie.</p></div></li>
           <li><span class="figura" style="--c: var(--pink)"><span>3</span><b>Aa</b></span>
             <div><p>Na mensagem seguinte, peça só o que quer mudar. Por exemplo: <i>Acrescente uma fase mais difícil e mantenha o resto do jogo.</i></p></div></li>
           <li><span class="figura" style="--c: var(--mint)"><span>4</span><svg aria-hidden="true"><use href="#i-enviar"/></svg></span>
@@ -431,7 +431,7 @@ p, li, blockquote {
       entrar: ['acenando', 'Oi! Eu coloco o seu jogo na internet, com um link e um QR Code para a turma. Primeiro, entre com o GitHub.'],
       publicar: ['pensando', 'Agora me mande o jogo. Pode ser o arquivo HTML ou o código que a IA criou.'],
       pronto: ['comemorando', 'Seu jogo está no ar! Mande o link para a turma ou projete o QR Code.'],
-      versao: ['pensando', 'Vamos fazer a versão nova! Copie o código, peça as mudanças no Gemini e me mande o jogo de volta. O link e o QR Code continuam os mesmos.'],
+      versao: ['pensando', 'Vamos fazer a versão nova! Copie o código, peça as mudanças no ChatGPT e me mande o jogo de volta. O link e o QR Code continuam os mesmos.'],
       'sem-conta': ['acenando', 'Oi! Eu coloco o seu jogo na internet, com um link e um QR Code para a turma. Não precisa de conta: é só dar um nome e enviar o arquivo.'],
     }
 
@@ -643,13 +643,13 @@ p, li, blockquote {
       }
     }
 
-    // Copiando o código com uma frase para o Gemini guardar o jogo antes do pedido de mudança
+    // Copiando o código com uma frase para a IA guardar o jogo antes do pedido de mudança
     elemento('botao-copiar').onclick = async () => {
       try {
         await navigator.clipboard.writeText('Este é o código do meu jogo. Guarde ele: na próxima mensagem eu digo o que quero mudar.\n\n' + editando.codigo)
-        falar('feliz', 'Copiei! Agora cole no Canvas do Gemini e, na mensagem seguinte, peça as mudanças.')
+        falar('feliz', 'Copiei! Agora cole no Canvas do ChatGPT e, na mensagem seguinte, peça as mudanças.')
       } catch {
-        falar('ops', 'Não consegui copiar. Toque em Baixar o arquivo e envie o arquivo para o Gemini.')
+        falar('ops', 'Não consegui copiar. Toque em Baixar o arquivo e envie o arquivo para o ChatGPT.')
       }
     }
 
@@ -989,9 +989,9 @@ p, li, blockquote {
     elemento('sc-copiar').onclick = async () => {
       try {
         await navigator.clipboard.writeText('Este é o código do meu jogo. Guarde ele: na próxima mensagem eu digo o que quero mudar.\n\n' + scEditando.html)
-        falar('feliz', 'Copiei! Agora cole no Canvas do Gemini e, na mensagem seguinte, peça as mudanças.')
+        falar('feliz', 'Copiei! Agora cole no Canvas do ChatGPT e, na mensagem seguinte, peça as mudanças.')
       } catch {
-        falar('ops', 'Não consegui copiar. Toque em Baixar o arquivo e envie o arquivo para o Gemini.')
+        falar('ops', 'Não consegui copiar. Toque em Baixar o arquivo e envie o arquivo para o ChatGPT.')
       }
     }
 
