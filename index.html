@@ -689,7 +689,10 @@ p, li, blockquote {
     function arquivoEscolhido() {
       const arquivo = elemento('arquivo').files[0]
       elemento('zona').classList.toggle('cheia', Boolean(arquivo))
-      elemento('zona-texto').innerHTML = arquivo ? `<b>${arquivo.name}</b> pronto para enviar` : 'Toque para escolher o arquivo <b>.html</b> ou arraste ele para cá'
+      elemento('zona-texto').innerHTML = 'Toque para escolher o arquivo <b>.html</b> ou arraste ele para cá'
+      if (arquivo) {
+        elemento('zona-texto').replaceChildren(Object.assign(document.createElement('b'), { textContent: arquivo.name }), ' pronto para enviar')
+      }
     }
     elemento('arquivo').onchange = arquivoEscolhido
     elemento('zona').ondragover = evento => { evento.preventDefault(); elemento('zona').classList.add('arrastando') }
