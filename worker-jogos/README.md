@@ -67,7 +67,7 @@ Sem rede e sem Cloudflare, com o R2 e o limite simulados:
 node teste/testar-worker.mjs
 ```
 
-São 49 casos: origem, formato, tamanho, publicar, abrir, cabeçalhos de segurança, código de edição, as 5 versões, voltar, denúncia, equipe e limite.
+Os casos cobrem origem, formato, tamanho, publicar, abrir (também com maiúsculas no link), cabeçalhos de segurança, código de edição (também sem os tracinhos), as 5 versões, voltar, denúncia, equipe e limite (por endereço e por bloco IPv6). No fim, o teste mostra quantos casos passaram.
 
 Para ver a página do publicador funcionando com o Worker:
 
