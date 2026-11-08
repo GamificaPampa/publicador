@@ -80,8 +80,14 @@ const sortear = (tamanho) => {
 }
 // O código de edição tem 3 grupos de 4 letras e números, fácil de anotar no caderno
 const novoCodigo = () => [sortear(4), sortear(4), sortear(4)].join('-')
+// Quem anota no caderno escreve "K7MP 2QXR 9TBD" ou "k7mp2qxr9tbd": com 12 letras e números, o código volta
+// ao formato com tracinhos antes do resumo, o mesmo de quando o jogo foi publicado
+const formatoDoCodigo = (texto) => {
+  const letras = String(texto).toLowerCase().replace(/[^a-z0-9]/g, '')
+  return letras.length === 12 ? letras.match(/.{4}/g).join('-') : String(texto).trim().toLowerCase()
+}
 const resumo = async (texto) => {
-  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(texto).trim().toLowerCase()))
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(formatoDoCodigo(texto)))
   return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 const idValido = (id) => typeof id === 'string' && /^[a-z2-9]{8}$/.test(id)
