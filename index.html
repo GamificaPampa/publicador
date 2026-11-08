@@ -814,9 +814,13 @@ p, li, blockquote {
       await acompanhar(caminho, nome, commit, titulo || (editando ? 'A versão nova está no ar!' : 'Seu jogo está no ar!'))
     }
 
-    // Mostrando o link e o QR Code e acompanhando o GitHub até o site ficar pronto (cerca de um minuto)
+    // Cada tela de pronto ganha um número. O acompanhamento de uma publicação anterior para quando aparece
+    // outra tela de pronto, para não escrever "Pronto!" no jogo que ainda está sendo montado
+    let vezDoPronto = 0
+
     // A tela do resultado, igual nos dois caminhos: link, QR Code, WhatsApp e a anotação para a Galeria
     function mostrarPronto(nome, link, titulo, versaoNova) {
+      vezDoPronto++
       elemento('link-jogo').href = elemento('botao-jogar').href = link
       anotarJogo(nome, link)
       elemento('link-jogo').textContent = link.replace(/^https?:\/\//, '')
@@ -835,29 +839,34 @@ p, li, blockquote {
       if (versaoNova) falar('comemorando', `${titulo} O link e o QR Code são os mesmos. Quem já estava com o jogo aberto só precisa recarregar a página.`)
     }
 
+    // Mostrando o link e o QR Code. A montagem é acompanhada sem esperar por ela, para o botão Publicar voltar
+    // a valer na hora: o professor pode publicar outro jogo ou uma versão nova enquanto o GitHub monta o site
     async function acompanhar(caminho, nome, commit, titulo) {
       const link = (await (await github(caminho + '/pages')).json()).html_url
       mostrarPronto(nome, link, titulo, Boolean(editando))
-      elemento('estado').className = 'estado montando'
-      elemento('estado').textContent = 'O GitHub está montando o site. Leva cerca de um minuto.'
-      // Esperando a montagem desta versão. A situação geral do site ainda pode ser a da versão anterior
-      for (let tentativa = 0; tentativa < 36; tentativa++) {
-        const montagem = await github(caminho + '/pages/builds/latest')
-        const { commit: montado, status: situacao } = montagem.ok ? await montagem.json() : {}
-        if (montado === commit && situacao === 'built') {
-          elemento('estado').className = 'estado'
-          elemento('estado').textContent = 'Pronto! O jogo já abre pelo link e pelo QR Code.'
-          return
-        }
-        if (montado === commit && situacao === 'errored') {
-          elemento('estado').className = 'estado'
-          elemento('estado').textContent = 'O GitHub não conseguiu montar o site. Publique o jogo de novo.'
-          return
-        }
-        await esperar(5000)
+      esperarMontagem(caminho, commit, vezDoPronto)
+    }
+
+    // Acompanhando o GitHub até o site ficar pronto (cerca de um minuto)
+    async function esperarMontagem(caminho, commit, vez) {
+      // Só escreve enquanto a tela de pronto for a desta publicação
+      const avisar = (texto, montando = false) => {
+        if (vez !== vezDoPronto) return
+        elemento('estado').className = montando ? 'estado montando' : 'estado'
+        elemento('estado').textContent = texto
       }
-      elemento('estado').className = 'estado'
-      elemento('estado').textContent = 'O GitHub está demorando mais que o normal. Abra o link daqui a alguns minutos.'
+      avisar('O GitHub está montando o site. Leva cerca de um minuto.', true)
+      try {
+        // Esperando a montagem desta versão. A situação geral do site ainda pode ser a da versão anterior
+        for (let tentativa = 0; tentativa < 36 && vez === vezDoPronto; tentativa++) {
+          const montagem = await github(caminho + '/pages/builds/latest')
+          const { commit: montado, status: situacao } = montagem.ok ? await montagem.json() : {}
+          if (montado === commit && situacao === 'built') return avisar('Pronto! O jogo já abre pelo link e pelo QR Code.')
+          if (montado === commit && situacao === 'errored') return avisar('O GitHub não conseguiu montar o site. Publique o jogo de novo.')
+          await esperar(5000)
+        }
+      } catch {}
+      avisar('O GitHub está demorando mais que o normal. Abra o link daqui a alguns minutos.')
     }
 
     elemento('botao-outro').onclick = () => fluxo === 'sem-conta' ? modoSemConta() : modoNovo()
