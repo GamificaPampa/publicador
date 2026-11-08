@@ -522,15 +522,20 @@ p, li, blockquote {
         // O state tem que ser o que esta aba sorteou ao sair para o GitHub, e vale uma vez só
         const estado = sessionStorage.getItem('estado')
         sessionStorage.removeItem('estado')
-        if (!estado || parametros.get('state') !== estado) throw new Error('O login não foi confirmado. Tente de novo.')
-        const resposta = await fetch(WORKER, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: parametros.get('code'), redirect_uri: ENDERECO_DE_VOLTA }),
-        }).catch(() => { throw new Error('Não consegui falar com o GitHub. Confira a internet e entre de novo.') })
-        const dados = await resposta.json().catch(() => ({}))
-        if (!dados.access_token) throw new Error('O login não deu certo. Tente de novo.')
-        sessionStorage.setItem('token', dados.access_token)
+        const confere = Boolean(estado) && parametros.get('state') === estado
+        // Quem já entrou e toca em Voltar no navegador passa de novo pelo GitHub, que devolve um código com o
+        // state antigo. O login desta aba continua valendo: o código que chegou é ignorado, sem virar token
+        if (!confere && !sessionStorage.getItem('token')) throw new Error('O login não foi confirmado. Tente de novo.')
+        if (confere) {
+          const resposta = await fetch(WORKER, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: parametros.get('code'), redirect_uri: ENDERECO_DE_VOLTA }),
+          }).catch(() => { throw new Error('Não consegui falar com o GitHub. Confira a internet e entre de novo.') })
+          const dados = await resposta.json().catch(() => ({}))
+          if (!dados.access_token) throw new Error('O login não deu certo. Tente de novo.')
+          sessionStorage.setItem('token', dados.access_token)
+        }
       }
       // Ligado o caminho sem conta, ele é o primeiro. Quem já entrou com o GitHub nesta aba continua lá
       if (JOGOS_SEM_CONTA.url && !sessionStorage.getItem('token')) return modoSemConta()
