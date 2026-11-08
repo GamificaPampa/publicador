@@ -71,6 +71,7 @@ r = await chamar('/versao', { corpo: { id: 'curto', codigo: pub.codigo, html: JO
 // Denúncia e equipe
 const FORM = { 'Content-Type': 'application/x-www-form-urlencoded' }
 r = await chamar(`/${pub.id}/denunciar`, { method: 'GET', origem: null }); ver('página de denúncia', r.status === 200 && /Pizzaria das Frações/.test(r.texto) && /form-action 'self'/.test(r.h.get('Content-Security-Policy')), r.status)
+ver('denúncia não abre em moldura de outro site', /frame-ancestors 'none'/.test(r.h.get('Content-Security-Policy')), r.h.get('Content-Security-Policy'))
 r = await chamar(`/${pub.id}/denunciar`, { origem: ORG, corpo: 'motivo=golpe', cabecalhos: FORM }); ver('denúncia de outra origem recusada', r.status === 403, r.status)
 r = await chamar(`/${pub.id}/denunciar`, { origem: BASE, corpo: 'motivo=golpe', cabecalhos: FORM }); ver('denúncia recebida', r.status === 200 && /Obrigado/.test(r.texto), r.status)
 r = await chamar(`/${pub.id}/denunciar`, { origem: 'null', corpo: 'motivo=golpe', cabecalhos: { ...FORM, 'Sec-Fetch-Site': 'cross-site' } }); ver('denúncia com Origin null de fora recusada', r.status === 403, r.status)
