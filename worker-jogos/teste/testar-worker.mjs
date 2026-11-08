@@ -56,6 +56,12 @@ r = await chamar('/' + pub.id, { method: 'POST', origem: null }); ver('POST no j
 r = await chamar('/jogo', { corpo: { id: pub.id, codigo: 'errado-errado' } }); ver('código errado', r.status === 403, r)
 r = await chamar('/jogo', { corpo: { id: 'zzzzzzzz', codigo: pub.codigo } }); ver('jogo inexistente na API', r.status === 404, r)
 r = await chamar('/jogo', { corpo: { id: pub.id, codigo: ' ' + pub.codigo.toUpperCase() + ' ' } }); ver('ver o jogo com o código (maiúsculas e espaços)', r.status === 200 && r.dados.html === JOGO && r.dados.versoes.length === 1, r)
+// Quem anotou o código no caderno pode escrever sem os tracinhos, com espaços ou com travessão no lugar deles
+for (const [rotulo, escrito] of [['sem tracinhos', pub.codigo.replace(/-/g, '')], ['com espaços', pub.codigo.replace(/-/g, ' ').toUpperCase()], ['com travessão', pub.codigo.replace(/-/g, '–')]]) {
+  r = await chamar('/jogo', { corpo: { id: pub.id, codigo: escrito } }); ver(`código ${rotulo}`, r.status === 200 && r.dados.html === JOGO, r)
+}
+r = await chamar('/jogo', { corpo: { id: pub.id, codigo: pub.codigo.slice(0, -1) } }); ver('código com uma letra a menos', r.status === 403, r)
+r = await chamar('/jogo', { corpo: { id: pub.id, codigo: pub.codigo.replace(/-/g, '') + 'x' } }); ver('código com uma letra a mais', r.status === 403, r)
 r = await chamar('/voltar', { corpo: { id: pub.id, codigo: pub.codigo } }); ver('voltar sem versão anterior', r.status === 409, r)
 const v = (n) => JOGO.replace('Fase 1', 'Versão ' + n)
 for (let n = 2; n <= 7; n++) r = await chamar('/versao', { corpo: { id: pub.id, codigo: pub.codigo, html: v(n) } })
