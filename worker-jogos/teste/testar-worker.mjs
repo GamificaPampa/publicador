@@ -49,6 +49,11 @@ ver('nosniff e sem cache', r.h.get('X-Content-Type-Options') === 'nosniff' && r.
 ver('Denunciar antes do fim do body', /<a href="\/[a-z2-9]{8}\/denunciar"[^>]*>Denunciar<\/a><\/body>/.test(r.texto), r.texto.slice(-300))
 r = await chamar('/abcdefgh', { method: 'GET', origem: null }); ver('jogo que não existe', r.status === 404, r.status)
 r = await chamar('/nao-e-id', { method: 'GET', origem: null }); ver('endereço estranho', r.status === 404, r.status)
+// O link anotado no caderno ou no quadro pode chegar com maiúsculas: leva ao mesmo jogo, em minúsculas
+r = await chamar('/' + pub.id.toUpperCase(), { method: 'GET', origem: null }); ver('link com maiúsculas leva ao jogo', r.status === 301 && r.h.get('Location') === `${BASE}/${pub.id}`, [r.status, r.h.get('Location')])
+r = await chamar(`/${pub.id.slice(0, 4).toUpperCase()}${pub.id.slice(4)}/denunciar?x=1`, { method: 'GET', origem: null }); ver('denúncia com maiúsculas no link', r.status === 301 && r.h.get('Location') === `${BASE}/${pub.id}/denunciar?x=1`, [r.status, r.h.get('Location')])
+r = await chamar('/ABCDEFGH', { method: 'GET', origem: null }); ver('maiúsculas de jogo que não existe', r.status === 301 && r.h.get('Location') === `${BASE}/abcdefgh`, [r.status, r.h.get('Location')])
+r = await chamar('/NAO-E-ID', { method: 'GET', origem: null }); ver('maiúsculas que não são id', r.status === 404, r.status)
 r = await chamar('/', { method: 'GET', origem: null }); ver('página inicial do Worker', r.status === 200 && /Publicador/.test(r.texto), r.status)
 r = await chamar('/' + pub.id, { method: 'POST', origem: null }); ver('POST no jogo recusado', r.status === 405, r.status)
 

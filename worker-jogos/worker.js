@@ -303,6 +303,10 @@ export default {
     if (partes.length === 0) {
       return pagina('Jogos', '<h1>Jogos dos professores</h1><p>Aqui ficam os jogos que professores publicaram com o GamificaPampa. Para publicar o seu, use o <a href="https://gamificapampa.github.io/publicador/">Publicador</a>.</p>')
     }
+    // O link anotado no caderno ou no quadro pode chegar com maiúsculas. O id é sempre em minúsculas,
+    // então leva ao mesmo endereço em minúsculas, como a API e o Trazer o jogo já fazem
+    const minusculo = partes[0].toLowerCase()
+    if (minusculo !== partes[0] && idValido(minusculo)) return Response.redirect(base + url.pathname.replace(partes[0], minusculo) + url.search, 301)
     if (!idValido(partes[0])) return naoAchou()
     const id = partes[0]
     if (partes[1] === 'denunciar' && partes.length === 2) return denunciar(request, env, id, base)
