@@ -125,7 +125,10 @@ function conferirHtml(html) {
 // Abrindo o jogo com um Denunciar discreto no canto, que leva a uma página do próprio Worker
 function servirJogo(id, html) {
   const botao = `<a href="/${id}/denunciar" target="_blank" rel="noopener nofollow" style="position:fixed;right:6px;bottom:6px;z-index:2147483647;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.82);color:#2f2a4a;font:12px/1.3 system-ui,sans-serif;text-decoration:none;opacity:.7">Denunciar</a>`
-  const fim = html.search(/<\/body>(?![\s\S]*<\/body>)/i)
+  // O último </body>, numa passada só: a busca com lookahead relia o resto do arquivo a cada </body>
+  // e passava de um minuto num jogo de 2 MB cheio deles
+  let fim = -1
+  for (const achado of html.matchAll(/<\/body>/gi)) fim = achado.index
   const comBotao = fim >= 0 ? html.slice(0, fim) + botao + html.slice(fim) : html + botao
   return new Response(comBotao, {
     headers: {
