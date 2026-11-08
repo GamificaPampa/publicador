@@ -92,6 +92,14 @@ usados = 1000
 r = await chamar('/publicar', { corpo: { nome: 'X', html: JOGO } }); ver('limite por endereço', r.status === 429 && /Espere um minuto/.test(r.dados.erro), r)
 r = await chamar('/jogo', { corpo: { id: 'abcdefgh', codigo: 'x' } }); ver('ver o jogo não gasta o limite', r.status === 404, r)
 r = await chamar('/publicar', { corpo: { nome: 'Sem limite', html: JOGO } }, { ...env, LIMITE: undefined }); ver('sem limite configurado', r.status === 201, r)
+// No IPv6 o limite conta o bloco /64, que é de uma casa ou de um celular; no IPv4, o endereço
+const chaves = []
+const envChaves = { ...env, LIMITE: { limit: async ({ key }) => { chaves.push(key); return { success: true } } } }
+for (const ip of ['2001:db8:a:b:1::1', '2001:0db8:000a:000b:ffff:1:2:3', '2001:db8:a:c::1', '203.0.113.7', '::1']) {
+  await chamar('/publicar', { corpo: { nome: 'IP', html: JOGO }, cabecalhos: { 'CF-Connecting-IP': ip } }, envChaves)
+}
+ver('IPv6 conta o bloco /64', chaves[0] === chaves[1] && chaves[0] === '2001:db8:a:b::/64' && chaves[2] === '2001:db8:a:c::/64', chaves)
+ver('IPv4 conta o endereço e ::1 vira bloco', chaves[3] === '203.0.113.7' && chaves[4] === '0:0:0:0::/64', chaves)
 
 console.log(casos.join('\n'))
 console.log(`\n${casos.filter((c) => c.startsWith('ok')).length} de ${casos.length} casos ok`)

@@ -146,10 +146,21 @@ function servirJogo(id, html) {
 const naoAchou = () => pagina('Jogo não encontrado', '<h1>Jogo não encontrado</h1><p>Confira o link ou o QR Code com quem mandou o jogo.</p>', 404)
 const saiuDoAr = () => pagina('Jogo fora do ar', '<h1>Este jogo saiu do ar</h1><p>A equipe do GamificaPampa tirou este jogo do ar.</p>', 410)
 
+// No IPv6, cada casa ou celular recebe um bloco /64 inteiro e escolhe à vontade o endereço dentro dele.
+// Contando por endereço, bastava trocar o fim dele a cada envio; o limite vale então para o bloco /64
+function chaveDoLimite(ip) {
+  if (!ip.includes(':') || ip.includes('.')) return ip
+  const [antes, depois] = ip.split('::')
+  const inicio = antes ? antes.split(':') : []
+  const fim = depois ? depois.split(':') : []
+  const grupos = depois === undefined ? inicio : [...inicio, ...Array(Math.max(0, 8 - inicio.length - fim.length)).fill('0'), ...fim]
+  return grupos.slice(0, 4).map((grupo) => (parseInt(grupo, 16) || 0).toString(16)).join(':') + '::/64'
+}
+
 async function limite(env, request) {
   if (!env.LIMITE) return true
   const ip = request.headers.get('CF-Connecting-IP') || 'sem-ip'
-  const { success } = await env.LIMITE.limit({ key: ip })
+  const { success } = await env.LIMITE.limit({ key: chaveDoLimite(ip) })
   return success
 }
 
