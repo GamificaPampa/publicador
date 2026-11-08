@@ -519,7 +519,10 @@ p, li, blockquote {
       if (parametros.get('origem') === 'maquina') history.replaceState(null, '', location.pathname)
       if (parametros.has('code')) {
         history.replaceState(null, '', location.pathname)
-        if (parametros.get('state') !== sessionStorage.getItem('estado')) throw new Error('O login não foi confirmado. Tente de novo.')
+        // O state tem que ser o que esta aba sorteou ao sair para o GitHub, e vale uma vez só
+        const estado = sessionStorage.getItem('estado')
+        sessionStorage.removeItem('estado')
+        if (!estado || parametros.get('state') !== estado) throw new Error('O login não foi confirmado. Tente de novo.')
         const resposta = await fetch(WORKER, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
