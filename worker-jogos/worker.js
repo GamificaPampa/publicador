@@ -65,7 +65,8 @@ const pagina = (titulo, corpo, status = 200, formulario = false) => new Response
   status,
   headers: {
     'Content-Type': 'text/html; charset=utf-8',
-    'Content-Security-Policy': `default-src 'none'; style-src 'unsafe-inline'; form-action ${formulario ? "'self'" : "'none'"}; base-uri 'none'`,
+    // frame-ancestors: outro site não põe a página da denúncia numa moldura invisível para o clique cair no botão
+    'Content-Security-Policy': `default-src 'none'; style-src 'unsafe-inline'; form-action ${formulario ? "'self'" : "'none'"}; base-uri 'none'; frame-ancestors 'none'`,
     'X-Content-Type-Options': 'nosniff',
     // same-origin, e não no-referrer: com no-referrer o navegador manda Origin: null no formulário da denúncia
     'Referrer-Policy': 'same-origin',
