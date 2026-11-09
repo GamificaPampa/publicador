@@ -102,7 +102,6 @@
     .qr { display: inline-grid; place-items: center; margin: 20px 0 6px; padding: 14px; border: 4px solid var(--ink); border-radius: 22px; background: var(--white); box-shadow: 0 8px 0 var(--ink); }
     .qr img, .qr canvas { width: 200px; height: 200px; }
     .estado { display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
-    .estado.montando::before { content: ""; width: 18px; height: 18px; flex: none; border: 3px solid var(--ink); border-right-color: transparent; border-radius: 50%; animation: girar 1s linear infinite; }
 
     @media (max-width: 560px) {
       .bit { flex-direction: column; }
@@ -229,7 +228,7 @@ p, li, blockquote {
 
       <ul class="etapas" id="etapas" hidden>
         <li>Enviando o jogo</li>
-        <li>Colocando o jogo no ar</li>
+        <li>Colocando o jogo no ar, o que leva de um a dois minutos</li>
       </ul>
       <p class="erro" id="erro-publicar" hidden></p>
     </section>
@@ -238,7 +237,7 @@ p, li, blockquote {
       <h2>Seu jogo está no ar!</h2>
       <p><a class="link" id="link-jogo" target="_blank" rel="noopener"></a></p>
       <div class="qr" id="qr" role="img" aria-label="QR Code do jogo"></div>
-      <p class="estado montando" id="estado">O GitHub está montando o site. Leva de um a dois minutos.</p>
+      <p class="estado" id="estado" hidden>O GitHub está demorando mais que o normal. Se o link não abrir, tente de novo daqui a alguns minutos.</p>
       <div class="acoes centro">
         <a class="btn btn--jogar" id="botao-jogar" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar</a>
         <a class="btn btn--compartilhar" id="botao-whatsapp" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg>Mandar no WhatsApp</a>
@@ -390,8 +389,11 @@ p, li, blockquote {
       try {
         etapa(0)
         const { link } = await enviar('/publicar', dados)
+        etapa(1)
+        falar('pensando', 'Recebi o jogo! Agora o GitHub está colocando ele no ar. Leva de um a dois minutos.')
+        const noAr = await esperarNoAr(link)
         etapa(2)
-        acompanhar(link, dados.nome)
+        mostrarPronto(link, dados.nome, noAr)
       } catch (erro) {
         elemento('etapas').hidden = true
         mostrarErro('erro-publicar', erro.message)
@@ -400,8 +402,18 @@ p, li, blockquote {
       }
     }
 
-    // Mostrando o link e o QR Code e testando o próprio link até o GitHub terminar de montar o site
-    async function acompanhar(link, nome) {
+    // Testando o próprio link a cada 5 segundos, por até 5 minutos, até o GitHub terminar de montar o site
+    async function esperarNoAr(link) {
+      for (let tentativa = 0; tentativa < 60; tentativa++) {
+        await esperar(5000)
+        const resposta = await fetch(link + '?v=' + Date.now(), { cache: 'no-store' }).catch(() => null)
+        if (resposta?.ok) return true
+      }
+      return false
+    }
+
+    // Mostrando o link, o QR Code e os botões só depois que o jogo abre, para o professor não ver a página de erro
+    function mostrarPronto(link, nome, noAr) {
       elemento('link-jogo').href = elemento('botao-jogar').href = link
       elemento('link-jogo').textContent = link.replace('https://', '')
       elemento('botao-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(`Jogue "${nome}": ${link}`)
@@ -409,19 +421,7 @@ p, li, blockquote {
       new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
       elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
       mostrar('pronto')
-      elemento('estado').className = 'estado montando'
-      elemento('estado').textContent = 'O GitHub está montando o site. Leva de um a dois minutos.'
-      for (let tentativa = 0; tentativa < 60; tentativa++) {
-        await esperar(5000)
-        const resposta = await fetch(link + '?v=' + Date.now(), { cache: 'no-store' }).catch(() => null)
-        if (resposta?.ok) {
-          elemento('estado').className = 'estado'
-          elemento('estado').textContent = 'Pronto! O jogo já abre pelo link e pelo QR Code.'
-          return
-        }
-      }
-      elemento('estado').className = 'estado'
-      elemento('estado').textContent = 'O GitHub está demorando mais que o normal. Tente abrir o link daqui a alguns minutos.'
+      elemento('estado').hidden = noAr
     }
 
     elemento('botao-outro').onclick = () => {
