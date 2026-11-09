@@ -461,8 +461,25 @@ p, li, blockquote {
       }
     }
 
+    // Recebendo o jogo que a máquina de prompts mandou ({ nome, html }) e pondo ele no formulário
+    function carregarDaMaquina() {
+      try {
+        const jogo = JSON.parse(sessionStorage.getItem('gp-publicador:jogo') || 'null')
+        sessionStorage.removeItem('gp-publicador:jogo')
+        if (!jogo || typeof jogo.html !== 'string' || !jogo.html.trim()) return false
+        elemento('nome').value = String(jogo.nome || '').trim().slice(0, 60)
+        elemento('codigo').value = jogo.html
+        elemento('codigo').closest('details').open = true
+        return true
+      } catch {
+        return false
+      }
+    }
+    if (new URLSearchParams(location.search).get('origem') === 'maquina') history.replaceState(null, '', location.pathname)
+
     if (location.hash === '#denunciar') abrirDenuncia()
     else mostrar('inicio')
+    if (carregarDaMaquina()) falar('feliz', 'O jogo que você criou na máquina já está aqui. Leia as regras e toque em Quero publicar um jogo.')
   </script>
 </body>
 </html>

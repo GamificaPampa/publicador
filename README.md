@@ -23,7 +23,7 @@ Cada envio gera um link novo, porque sem login não há como saber quem pode alt
 1. Crie o repositório público `GamificaPampa/jogos`, ligue o Pages pelo GitHub Actions com `gh api -X POST repos/GamificaPampa/jogos/pages -f build_type=workflow` e só depois envie o conteúdo da pasta `jogos`. Se o primeiro workflow falhar, rode de novo com `gh workflow run pages.yml -R GamificaPampa/jogos`.
 2. Crie o repositório privado `GamificaPampa/jogos-registro`, vazio, com os rótulos `publicação` e `denúncia`. Cada pessoa da equipe que vai cuidar das denúncias clica em **Watch** nele. O GitHub não avisa o autor das próprias issues, e o autor é o dono do token, então essa pessoa precisa de outra forma de acompanhar, ou o token sai de uma conta só para isso.
 3. Crie um token fine-grained em github.com, Settings, Developer settings, Fine-grained tokens. Resource owner: GamificaPampa. Repositórios: só `jogos` e `jogos-registro`. Permissões: Contents (leitura e escrita) e Issues (leitura e escrita). Se a org pedir aprovação, aprove em Settings da org, Personal access tokens.
-4. No Cloudflare, cole o `worker.js` novo no editor do Worker `publicador-gamificapampa`, faça Deploy e crie o segredo `GITHUB_TOKEN_PUBLICADOR` com o token. As variáveis `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` deixam de ser usadas.
+4. No Cloudflare, cole o `worker.js` novo no editor do Worker `publicador-gamificapampa`, faça Deploy e crie o segredo `GITHUB_TOKEN_PUBLICADOR` com o token. As variáveis `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` continuam lá, para a rota do login.
 5. Publique esta pasta no repositório `publicador`.
 
 ## Remover um jogo
@@ -37,3 +37,11 @@ O token da org é um só para todos os professores. O GitHub aceita até 80 oper
 A checagem de origem e o campo isca barram robôs simples. Para frear abuso de uma pessoa, o próximo passo é o Cloudflare Turnstile ou uma regra de limite no WAF. Dois professores que enviam jogos de mesmo nome no mesmo segundo ficam com a mesma pasta, e o segundo jogo substitui o primeiro.
 
 Para testar no computador, sirva a pasta-mãe com o `identidade-visual` ao lado, como manda o `AGENTS.md` do `recursos-pedagogicos`. A publicação só funciona no endereço publicado, que é a única origem que o Worker aceita.
+
+## Jogo vindo da máquina de prompts
+
+A máquina de prompts grava `sessionStorage.setItem('gp-publicador:jogo', JSON.stringify({ nome, html }))` e abre `/publicador/?origem=maquina`. O publicador limpa o endereço, põe o nome e o código no formulário e apaga a chave.
+
+## Login pelo GitHub e worker-jogos
+
+O Worker ainda troca o código do login do GitHub pelo token na rota `/`, com `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET`, para não quebrar quem tiver a página antiga aberta. A página atual não usa essa rota. A pasta [worker-jogos](worker-jogos/) guarda o caminho sem conta que o Arthur preparou, com endereço próprio e código de edição. Ele ficou fora do ar, porque a equipe escolheu a galeria da org.
