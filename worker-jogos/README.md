@@ -29,6 +29,8 @@ Só a página da org chama a API pelo navegador. Para testar no computador, ponh
 
 ## Como ligar
 
+O Arthur decidiu ligar em 09/11/2026 (D4 da spec da retrospectiva), com o GitHub como opção. O passo a passo junto com o do Criar aqui fica no repositório `equipe`, em `notas/ligar-publicador-e-criar-aqui.md`.
+
 Na conta da Cloudflare que já tem o Worker do publicador, nesta pasta:
 
 ```bash
