@@ -251,7 +251,8 @@ async function denunciar(request, env, id, base) {
   let motivo = 'outro'
   try {
     const recebido = String((await request.formData()).get('motivo') || '')
-    if (MOTIVOS[recebido]) motivo = recebido
+    // Object.hasOwn, e não MOTIVOS[recebido]: "constructor" e "toString" existem em todo objeto e virariam motivo
+    if (Object.hasOwn(MOTIVOS, recebido)) motivo = recebido
   } catch {}
   const denuncias = info.denuncias || { total: 0, motivos: {} }
   denuncias.total += 1

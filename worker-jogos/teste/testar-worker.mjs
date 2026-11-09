@@ -89,6 +89,10 @@ r = await chamar(`/${pub.id}/denunciar`, { origem: 'null', corpo: 'motivo=golpe'
 r = await chamar(`/${pub.id}/denunciar`, { origem: 'null', corpo: 'motivo=%3Cscript%3E', cabecalhos: { ...FORM, 'Sec-Fetch-Site': 'same-origin' } }); ver('denúncia do próprio formulário com Origin null', r.status === 200, r.status)
 const marcado = JSON.parse(env.JOGOS.dados.get(`jogos/${pub.id}/info.json`)).denuncias
 ver('denúncia marca o jogo e o motivo estranho vira outro', marcado.total === 2 && marcado.motivos.golpe === 1 && marcado.motivos.outro === 1 && env.JOGOS.dados.has(`denuncias/${pub.id}`), marcado)
+// Nome que todo objeto do JavaScript tem (constructor, toString) não é motivo: vira outro, e a contagem continua número
+for (const nome of ['constructor', 'toString', '__proto__']) await chamar(`/${pub.id}/denunciar`, { origem: BASE, corpo: 'motivo=' + nome, cabecalhos: FORM })
+const comNomesDoObjeto = JSON.parse(env.JOGOS.dados.get(`jogos/${pub.id}/info.json`)).denuncias
+ver('motivo com nome de objeto vira outro', comNomesDoObjeto.total === 5 && comNomesDoObjeto.motivos.outro === 4 && Object.values(comNomesDoObjeto.motivos).every((n) => typeof n === 'number'), comNomesDoObjeto)
 r = await chamar('/' + pub.id, { method: 'GET', origem: null }); ver('denúncia não tira do ar sozinha', r.status === 200, r.status)
 r = await chamar('/equipe/denuncias', { method: 'GET', origem: null }); ver('equipe sem chave recusada', r.status === 401, r)
 r = await chamar('/equipe/denuncias', { method: 'GET', origem: null }, { ...env, ADMIN_CHAVE: '' }); ver('sem ADMIN_CHAVE configurada', r.status === 503, r)
