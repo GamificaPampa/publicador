@@ -174,6 +174,23 @@ export default {
     }
 
     const rota = new URL(request.url).pathname
+
+    // Trocando o código do login do GitHub pelo token, para a página que publica na conta do professor
+    if (rota === '/') {
+      const campos = corpo.refresh_token
+        ? { grant_type: 'refresh_token', refresh_token: corpo.refresh_token }
+        : { code: corpo.code, redirect_uri: corpo.redirect_uri }
+      if (!campos.code && !campos.refresh_token) return responder({ erro: 'Falta o código' }, 400)
+      const resposta = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: env.GITHUB_CLIENT_ID, client_secret: env.GITHUB_CLIENT_SECRET, ...campos }),
+      })
+      const dados = await resposta.json()
+      if (dados.error) return responder({ erro: dados.error_description || dados.error }, 400)
+      return responder(dados)
+    }
+
     try {
       if (rota === '/publicar') return responder(await publicar(env, corpo))
       if (rota === '/denunciar') return responder(await denunciar(env, corpo))
