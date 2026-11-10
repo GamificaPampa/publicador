@@ -93,6 +93,14 @@
     .etapas li.feita { color: var(--ink); }
     .etapas li.feita::before { content: "✓"; display: grid; place-items: center; background: var(--mint); font-weight: 700; font-size: 16px; }
     @keyframes girar { to { transform: rotate(360deg); } }
+    /* Colar e prévia (feedback dos professores em 09/11): o código entra com um toque, e o jogo aparece antes de publicar */
+    .colar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 12px; }
+    .colar-dica { margin: 0; font-weight: 600; font-size: 15px; }
+    .previa { display: grid; gap: 12px; margin-top: 22px; padding: 16px; border: 4px solid var(--ink); border-radius: 22px; background: var(--cream); }
+    .previa h3 { margin: 0; font-size: 22px; }
+    .previa p { margin: 0; font-weight: 600; font-size: 15px; }
+    .previa iframe { width: 100%; height: min(70vh, 560px); background: #fff; border: 3px solid var(--ink); border-radius: 16px; }
+    .previa .acoes { margin-top: 0; }
     .erro { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #ffe0ea; font-weight: 600; }
     .sucesso { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #e3faf1; font-weight: 600; }
 
@@ -128,6 +136,7 @@ p, li, blockquote {
     <symbol id="i-compartilhar" viewBox="0 0 24 24"><path d="M7 12l10-6M7 12l10 6" stroke="#2f2a4a" stroke-width="2.6"/><circle cx="6" cy="12" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="5.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="18.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/></symbol>
     <symbol id="i-baixar" viewBox="0 0 24 24"><path d="M12 3v11m-5-5 5 5 5-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
     <symbol id="i-enviar" viewBox="0 0 24 24"><path d="M12 15V4m-5 5 5-5 5 5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="i-colar" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="3" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><rect x="8.5" y="2.5" width="7" height="4" rx="1.5" fill="#ffd23f" stroke="#2f2a4a" stroke-width="2.2"/><path d="M8.5 11h7M8.5 15h5" stroke="#2f2a4a" stroke-width="2.2" stroke-linecap="round"/></symbol>
     <symbol id="i-lista" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><path d="M8 9h8M8 13h8M8 17h5" stroke="#2f2a4a" stroke-width="2.5" stroke-linecap="round"/></symbol>
   </svg>
 
@@ -204,10 +213,24 @@ p, li, blockquote {
       </label>
 
       <details>
-        <summary>Prefiro colar o código do jogo</summary>
+        <summary id="resumo-colar">Prefiro colar o código do jogo</summary>
+        <div class="colar">
+          <button class="btn btn--small" type="button" id="botao-colar"><svg width="18" height="18" aria-hidden="true"><use href="#i-colar"/></svg>Colar o código</button>
+          <p class="colar-dica" id="colar-dica" role="status"></p>
+        </div>
         <label class="campo" for="codigo">Código do jogo</label>
         <textarea id="codigo" placeholder="&lt;!doctype html&gt; ..."></textarea>
       </details>
+
+      <div class="previa" id="previa" hidden>
+        <h3>Prévia do jogo</h3>
+        <p>Jogue um pouco antes de publicar: é assim que a turma vai ver.</p>
+        <iframe id="previa-jogo" title="Prévia do jogo" sandbox="allow-scripts"></iframe>
+        <div class="acoes">
+          <button class="btn btn--small btn--jogar" type="button" id="previa-tela"><svg width="18" height="18" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar em tela cheia</button>
+          <button class="btn btn--small" type="button" id="previa-reiniciar">Começar de novo</button>
+        </div>
+      </div>
 
       <!-- Campo isca: fica fora da tela, e só robôs de spam o preenchem -->
       <input class="isca" type="text" id="site" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -346,7 +369,51 @@ p, li, blockquote {
       const arquivo = elemento('arquivo').files[0]
       elemento('zona').classList.toggle('cheia', Boolean(arquivo))
       elemento('zona-texto').innerHTML = arquivo ? `<b>${arquivo.name.replace(/</g, '&lt;')}</b> pronto para enviar` : 'Toque para escolher o arquivo <b>.html</b> ou arraste ele para cá'
+      atualizarPrevia()
     }
+
+    // A prévia mostra o mesmo HTML que vai ser publicado: o arquivo, se houver, senão o código colado.
+    // Ela roda numa moldura isolada (sandbox sem allow-same-origin): o jogo não alcança a página nem o que ela guarda
+    const htmlAtual = async () => elemento('arquivo').files[0] ? await elemento('arquivo').files[0].text() : elemento('codigo').value
+    let previaAgora = ''
+    async function atualizarPrevia() {
+      const html = await htmlAtual()
+      const valido = /<(html|body|script)/i.test(html)
+      elemento('previa').hidden = !valido
+      if (!valido) { previaAgora = ''; elemento('previa-jogo').removeAttribute('srcdoc'); return }
+      if (html !== previaAgora) { previaAgora = html; elemento('previa-jogo').srcdoc = html }
+    }
+    let esperaPrevia
+    elemento('codigo').addEventListener('input', () => { clearTimeout(esperaPrevia); esperaPrevia = setTimeout(atualizarPrevia, 600) })
+    elemento('previa-reiniciar').onclick = () => { previaAgora = ''; atualizarPrevia() }
+    elemento('previa-tela').onclick = () => {
+      const moldura = elemento('previa-jogo')
+      if (moldura.requestFullscreen) moldura.requestFullscreen().catch(() => {})
+    }
+
+    // Colar com um toque: lê a área de transferência quando o professor toca no botão ou abre o "Prefiro colar".
+    // Se o navegador não deixar, a dica explica como colar à mão
+    async function colar() {
+      const dica = elemento('colar-dica')
+      try {
+        if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error('sem acesso')
+        const texto = await navigator.clipboard.readText()
+        if (!texto.trim()) { dica.textContent = 'A área de transferência está vazia. Copie o código do jogo no ChatGPT e toque de novo.'; return }
+        elemento('codigo').value = texto
+        // O código colado passa a valer: o arquivo escolhido antes sai, para não publicar o jogo errado
+        if (elemento('arquivo').files[0]) { elemento('arquivo').value = ''; arquivoEscolhido() }
+        await atualizarPrevia()
+        dica.textContent = /<(html|body|script)/i.test(texto) ? 'Colei o código. Confira o jogo na prévia.' : 'Colei, mas isso não parece o código de um jogo. Copie o bloco de código HTML inteiro.'
+      } catch {
+        dica.textContent = 'O navegador não deixou colar sozinho. Toque e segure na caixa abaixo e escolha Colar, ou use Ctrl + V.'
+        elemento('codigo').focus()
+      }
+    }
+    elemento('botao-colar').onclick = colar
+    elemento('resumo-colar').addEventListener('click', () => {
+      // Abrindo o "Prefiro colar" com a caixa vazia, já tenta colar
+      if (!elemento('codigo').closest('details').open && !elemento('codigo').value.trim()) colar()
+    })
     elemento('arquivo').onchange = arquivoEscolhido
     elemento('zona').ondragover = evento => { evento.preventDefault(); elemento('zona').classList.add('arrastando') }
     elemento('zona').ondragleave = () => elemento('zona').classList.remove('arrastando')
@@ -428,6 +495,7 @@ p, li, blockquote {
       for (const id of ['nome', 'arquivo', 'codigo']) elemento(id).value = ''
       elemento('aceite').checked = false
       elemento('etapas').hidden = true
+      elemento('colar-dica').textContent = ''
       arquivoEscolhido()
       mostrar('publicar')
     }
@@ -470,6 +538,7 @@ p, li, blockquote {
         elemento('nome').value = String(jogo.nome || '').trim().slice(0, 60)
         elemento('codigo').value = jogo.html
         elemento('codigo').closest('details').open = true
+        atualizarPrevia()
         return true
       } catch {
         return false
