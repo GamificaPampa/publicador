@@ -186,7 +186,10 @@ export default {
         headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify({ client_id: env.GITHUB_CLIENT_ID, client_secret: env.GITHUB_CLIENT_SECRET, ...campos }),
       })
-      const dados = await resposta.json()
+      // Com muitos logins da mesma rede, o GitHub responde "Too many requests" em texto, e não em JSON
+      if (resposta.status === 429) return responder({ erro: 'Muita gente entrando ao mesmo tempo. Espere um minuto e tente de novo.' }, 429)
+      const dados = await resposta.json().catch(() => null)
+      if (!dados) return responder({ erro: 'Não consegui falar com o GitHub. Tente de novo.' }, 502)
       if (dados.error) return responder({ erro: dados.error_description || dados.error }, 400)
       return responder(dados)
     }
