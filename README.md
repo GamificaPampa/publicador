@@ -38,6 +38,10 @@ A checagem de origem e o campo isca barram robôs simples. Para frear abuso de u
 
 Para testar no computador, sirva a pasta-mãe com o `identidade-visual` ao lado, como manda o `AGENTS.md` do `recursos-pedagogicos`. A publicação só funciona no endereço publicado, que é a única origem que o Worker aceita.
 
+## Conferência do jogo
+
+Na prévia, antes de publicar, a página lê o código e avisa em palavras simples o que costuma dar errado nos jogos feitos com a IA: a marcação ``` que sobrou, o código cortado sem o `</html>`, erro de JavaScript, coisa puxada da internet (menos a fonte do Google), `alert`, pedido do nome do aluno, a resposta certa quase sempre no mesmo lugar e o objetivo que falta na tela de início. Cada aviso traz o pedido pronto para mandar na mesma conversa com a IA. A conferência não impede de publicar. As regras ficam em `conferirJogo`, no `index.html`, e vieram da rubrica dos jogos de 09/11/2026 (`equipe/notas/spec-retrospectiva-2026-11-06.md`).
+
 ## Jogo vindo da máquina de prompts
 
 A máquina de prompts grava `sessionStorage.setItem('gp-publicador:jogo', JSON.stringify({ nome, html }))` e abre `/publicador/?origem=maquina`. O publicador limpa o endereço, põe o nome e o código no formulário e apaga a chave.

@@ -101,6 +101,14 @@
     .previa p { margin: 0; font-weight: 600; font-size: 15px; }
     .previa iframe { width: 100%; height: min(70vh, 560px); background: #fff; border: 3px solid var(--ink); border-radius: 16px; }
     .previa .acoes { margin-top: 0; }
+    /* Conferência do jogo (ideia 1 de 10/11): avisa em palavras simples o que costuma dar errado, sem impedir de publicar */
+    .conferencia { display: grid; gap: 10px; padding: 12px 14px; border: 3px solid var(--ink); border-radius: 16px; background: #fff6d6; }
+    .conferencia.ok { background: #c9f5e3; }
+    .conferencia h4 { margin: 0; font-size: 18px; }
+    .conferencia ul { display: grid; gap: 10px; margin: 0; padding-left: 20px; }
+    .conferencia li { font-weight: 600; font-size: 15px; }
+    .conferencia .pedido { display: block; margin-top: 4px; font-weight: 500; font-style: italic; }
+    .conferencia .btn { margin-top: 6px; }
     .erro { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #ffe0ea; font-weight: 600; }
     .sucesso { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #e3faf1; font-weight: 600; }
 
@@ -225,6 +233,7 @@ p, li, blockquote {
       <div class="previa" id="previa" hidden>
         <h3>Prévia do jogo</h3>
         <p>Jogue um pouco antes de publicar: é assim que a turma vai ver.</p>
+        <div class="conferencia" id="conferencia" role="status" hidden></div>
         <iframe id="previa-jogo" title="Prévia do jogo" sandbox="allow-scripts"></iframe>
         <div class="acoes">
           <button class="btn btn--small btn--jogar" type="button" id="previa-tela"><svg width="18" height="18" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar em tela cheia</button>
@@ -381,7 +390,54 @@ p, li, blockquote {
       const valido = /<(html|body|script)/i.test(html)
       elemento('previa').hidden = !valido
       if (!valido) { previaAgora = ''; elemento('previa-jogo').removeAttribute('srcdoc'); return }
-      if (html !== previaAgora) { previaAgora = html; elemento('previa-jogo').srcdoc = html }
+      if (html !== previaAgora) { previaAgora = html; elemento('previa-jogo').srcdoc = html; mostrarConferencia(html) }
+    }
+    // Conferência do jogo: lê o código e avisa o que costuma dar errado nos jogos feitos com a IA (rubrica de 09/11).
+    // Nada aqui impede de publicar; cada aviso traz a frase para pedir o conserto na mesma conversa
+    const PEDIDO_FIM = ' Mostre o código completo do jogo num único bloco de código HTML, sem criar arquivo.'
+    function conferirJogo(html) {
+      const avisos = []
+      // Só os scripts comuns: módulo e JSON ficam fora da conferência de sintaxe
+      const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(m => !/type=["']?(module|application\/(ld\+)?json|text\/template)/i.test(m[1])).map(m => m[2]).join('\n')
+      if (/^\s*```|```\s*$/.test(html)) avisos.push({ texto: 'Sobrou a marcação ``` do ChatGPT no começo ou no fim do código. Copie só o que está dentro do bloco, ou use o botão Copiar código do bloco.' })
+      if (!/<\/html>\s*(```)?\s*$/i.test(html)) avisos.push({ texto: 'O código parece cortado no fim: falta o </html>. O jogo pode abrir pela metade.', pedido: 'A resposta veio cortada. Mande de novo o jogo inteiro, sem cortar.' + PEDIDO_FIM })
+      try { new Function(scripts) } catch (erro) { avisos.push({ texto: `O código do jogo tem um erro e pode não funcionar (${erro.message}).`, pedido: `O jogo tem um erro de JavaScript: ${erro.message}. Encontre e corrija, sem mudar o resto.` + PEDIDO_FIM }) }
+      const externos = [...new Set([...html.matchAll(/<(?:script|img|link|iframe|audio|video|source)\b[^>]*?(?:src|href)=["']?(https?:\/\/[^"'\s>]+)/gi)].map(m => m[1].split('/')[2].toLowerCase()).filter(host => !/^fonts\.(googleapis|gstatic)\.com$/.test(host)))]
+      if (externos.length) avisos.push({ texto: `O jogo busca coisas na internet (${externos.join(', ')}). Sem internet na escola, essa parte não aparece.`, pedido: 'Tire tudo o que vem de fora: desenhe as imagens em SVG ou CSS no próprio arquivo e não use bibliotecas externas.' + PEDIDO_FIM })
+      if (/\b(alert|prompt|confirm)\s*\(/.test(scripts)) avisos.push({ texto: 'O jogo usa janelas de aviso do navegador, que travam em alguns celulares e no modo tela cheia.', pedido: 'Troque os alert, prompt e confirm por mensagens na própria tela do jogo.' + PEDIDO_FIM })
+      if (/(digite|escreva|qual [ée]) (o )?seu nome|nome do aluno|nome da crian[çc]a/i.test(html)) avisos.push({ texto: 'O jogo parece pedir o nome do aluno. Nenhum dado de aluno deve entrar no jogo publicado.', pedido: 'Tire do jogo qualquer pedido de nome ou dado do aluno.' + PEDIDO_FIM })
+      // A resposta certa sempre no mesmo lugar: dá para ganhar tocando sempre no mesmo botão
+      const indices = [...scripts.matchAll(/\b(?:correta|certa|correto|certo|resposta|answer|correct)\s*:\s*(\d)\b/g)].map(m => m[1])
+      const embaralha = /Math\.random\(\)\s*-\s*0?\.5|shuffle|embaralh|misturar/i.test(scripts)
+      if (indices.length >= 4 && !embaralha) {
+        const vezes = Math.max(...Object.values(indices.reduce((conta, i) => ({ ...conta, [i]: (conta[i] || 0) + 1 }), {})))
+        if (vezes / indices.length >= 0.7) avisos.push({ texto: `A resposta certa fica quase sempre no mesmo lugar (${vezes} de ${indices.length} perguntas). A turma descobre e ganha sem pensar.`, pedido: 'Embaralhe as opções em cada pergunta e a cada partida, para a resposta certa não ficar sempre no mesmo lugar. Mantenha o resto do jogo como está.' + PEDIDO_FIM })
+      }
+      const textoVisivel = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ')
+      if (!/objetivo|voc[êe] vai (aprender|conseguir)|aprender a/i.test(textoVisivel + scripts)) avisos.push({ texto: 'Não achei o objetivo do jogo na tela de início. A turma joga melhor sabendo o que vai aprender.', pedido: 'Na tela de início, escreva numa frase o objetivo: o que a turma vai conseguir fazer depois. Mantenha o resto do jogo como está.' + PEDIDO_FIM })
+      return avisos
+    }
+    function mostrarConferencia(html) {
+      const caixa = elemento('conferencia')
+      const avisos = conferirJogo(html)
+      caixa.hidden = false
+      caixa.classList.toggle('ok', !avisos.length)
+      if (!avisos.length) { caixa.innerHTML = '<h4>Conferi o código: nada de errado à vista.</h4>'; return }
+      caixa.innerHTML = '<h4>Antes de publicar, confira</h4><p>Dá para publicar assim mesmo. Para consertar, copie o pedido e mande na mesma conversa com a IA.</p><ul></ul>'
+      for (const aviso of avisos) {
+        const item = document.createElement('li')
+        item.append(aviso.texto)
+        if (aviso.pedido) {
+          const pedido = Object.assign(document.createElement('span'), { className: 'pedido', textContent: aviso.pedido })
+          const botao = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn--small', textContent: 'Copiar o pedido' })
+          botao.onclick = async () => {
+            try { await navigator.clipboard.writeText(aviso.pedido); botao.textContent = 'Copiado!' } catch { botao.textContent = 'Selecione e copie à mão' }
+            setTimeout(() => { botao.textContent = 'Copiar o pedido' }, 2000)
+          }
+          item.append(pedido, botao)
+        }
+        caixa.querySelector('ul').append(item)
+      }
     }
     let esperaPrevia
     elemento('codigo').addEventListener('input', () => { clearTimeout(esperaPrevia); esperaPrevia = setTimeout(atualizarPrevia, 600) })
