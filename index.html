@@ -109,6 +109,8 @@
     .conferencia li { font-weight: 600; font-size: 15px; }
     .conferencia .pedido { display: block; margin-top: 4px; font-weight: 500; font-style: italic; }
     .conferencia .btn { margin-top: 6px; }
+    .conferencia > .btn { justify-self: start; margin-top: 0; }
+    .conferencia > p { margin: 0; }
     .erro { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #ffe0ea; font-weight: 600; }
     .sucesso { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #e3faf1; font-weight: 600; }
 
@@ -395,20 +397,84 @@ p, li, blockquote {
     // Conferência do jogo: lê o código e avisa o que costuma dar errado nos jogos feitos com a IA (rubrica de 09/11).
     // Nada aqui impede de publicar; cada aviso traz a frase para pedir o conserto na mesma conversa
     const PEDIDO_FIM = ' Mostre o código completo do jogo num único bloco de código HTML, sem criar arquivo.'
+    // Em que posição fica a resposta certa de cada pergunta. A IA marca de três jeitos:
+    // pelo número (correta: 2), pela opção marcada ({ t: '1/4', certa: true }) ou pelo texto (correta: '1/4', perto da lista)
+    function posicoesDaCerta(scripts) {
+      const posicoes = [...scripts.matchAll(/\b(?:correta|certa|correto|certo|resposta|answer|correct)\s*:\s*(\d)\b/g)].map(m => m[1])
+      const TEXTO_CERTO = /\b(?:correta|certa|correto|resposta|answer|correct)\s*:\s*(["'`])((?:\\.|(?!\1).)*)\1/
+      for (const lista of scripts.matchAll(/\b(?:opcoes|opções|alternativas|options|choices)\s*:\s*\[/g)) {
+        // Recorta a lista até o colchete que a fecha
+        const inicio = lista.index + lista[0].length
+        let fim = inicio, nivel = 1
+        while (fim < scripts.length && nivel) { const c = scripts[fim++]; if (c === '[') nivel++; else if (c === ']') nivel-- }
+        const dentro = scripts.slice(inicio, fim - 1)
+        if (dentro.includes('{')) {
+          const marcada = dentro.split(/\}\s*,/).findIndex(opcao => /\b(?:certa|correta|correto|correct)\s*:\s*(true|!0)\b/.test(opcao))
+          if (marcada >= 0) posicoes.push(String(marcada))
+          continue
+        }
+        const textos = [...dentro.matchAll(/(["'`])((?:\\.|(?!\1).)*)\1/g)].map(m => m[2])
+        // A certa vem logo depois da lista ou, se não, logo antes dela
+        const certa = scripts.slice(fim, fim + 300).match(TEXTO_CERTO) || [...scripts.slice(Math.max(0, lista.index - 300), lista.index).matchAll(new RegExp(TEXTO_CERTO, 'g'))].pop()
+        if (certa && textos.includes(certa[2])) posicoes.push(String(textos.indexOf(certa[2])))
+      }
+      return posicoes
+    }
+    // Acha o (, [ ou { que não fecha, ou que fecha com o sinal errado, pulando textos e comentários
+    function ondeFaltaFechar(js) {
+      const pilha = [], PAR = { ')': '(', ']': '[', '}': '{' }
+      let texto = null, comentario = null
+      const linha = (i) => js.slice(js.lastIndexOf('\n', i - 1) + 1, (js.indexOf('\n', i) + 1 || js.length + 1) - 1).trim().slice(0, 80)
+      for (let i = 0; i < js.length; i++) {
+        const c = js[i], d = js[i + 1]
+        if (comentario) { if (comentario === '//' ? c === '\n' : c === '*' && d === '/') { if (comentario === '/*') i++; comentario = null } continue }
+        if (texto) {
+          if (c === '\\') i++
+          else if (c === texto) texto = null
+          else if (texto === '`' && c === '$' && d === '{') { pilha.push(['${', i]); texto = null; i++ }
+          continue
+        }
+        if (c === '/' && (d === '/' || d === '*')) { comentario = c + d; i++; continue }
+        if (c === '"' || c === "'" || c === '`') { texto = c; continue }
+        // Expressão regular (/.../ depois de sinal ou de abrir): pula até a barra que fecha, fora de [...]
+        if (c === '/' && /(^|[(,=:[!&|?{};+\-*%<>~^]|\breturn)\s*$/.test(js.slice(Math.max(0, i - 12), i))) {
+          let classe = false
+          for (i++; i < js.length && js[i] !== '\n'; i++) {
+            if (js[i] === '\\') i++
+            else if (js[i] === '[') classe = true
+            else if (js[i] === ']') classe = false
+            else if (js[i] === '/' && !classe) break
+          }
+          continue
+        }
+        if ('([{'.includes(c)) pilha.push([c, i])
+        else if (c in PAR) {
+          const [aberto, posicao] = pilha.pop() || []
+          if (aberto === '${' && c === '}') { texto = '`'; continue }
+          if (aberto !== PAR[c]) return aberto ? `Parece que o "${aberto}" aberto na linha "${linha(posicao)}" fecha com "${c}" na linha "${linha(i)}".` : `Parece que sobra um "${c}" na linha "${linha(i)}".`
+        }
+      }
+      const [aberto, posicao] = pilha.pop() || []
+      return aberto ? `Parece que o "${aberto}" aberto na linha "${linha(posicao)}" nunca é fechado.` : ''
+    }
     function conferirJogo(html) {
       const avisos = []
       // Só os scripts comuns: módulo e JSON ficam fora da conferência de sintaxe
       const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(m => !/type=["']?(module|application\/(ld\+)?json|text\/template)/i.test(m[1])).map(m => m[2]).join('\n')
       if (/^\s*```|```\s*$/.test(html)) avisos.push({ texto: 'Sobrou a marcação ``` do ChatGPT no começo ou no fim do código. Copie só o que está dentro do bloco, ou use o botão Copiar código do bloco.' })
       if (!/<\/html>\s*(```)?\s*$/i.test(html)) avisos.push({ texto: 'O código parece cortado no fim: falta o </html>. O jogo pode abrir pela metade.', pedido: 'A resposta veio cortada. Mande de novo o jogo inteiro, sem cortar.' + PEDIDO_FIM })
-      try { new Function(scripts) } catch (erro) { avisos.push({ texto: `O código do jogo tem um erro e pode não funcionar (${erro.message}).`, pedido: `O jogo tem um erro de JavaScript: ${erro.message}. Encontre e corrija, sem mudar o resto.` + PEDIDO_FIM }) }
+      try { new Function(scripts) } catch (erro) {
+        // Só a mensagem do navegador não basta: no teste de 12/11, a IA "consertou" outra coisa. Com a linha, ela acha
+        const onde = ondeFaltaFechar(scripts)
+        avisos.push({ texto: `O código do jogo tem um erro e o jogo pode nem abrir (${erro.message}).`, pedido: `O jogo tem um erro de JavaScript que impede de abrir: ${erro.message}.${onde ? ` ${onde}` : ''} Encontre e corrija, sem mudar o resto.` + PEDIDO_FIM })
+      }
       const externos = [...new Set([...html.matchAll(/<(?:script|img|link|iframe|audio|video|source)\b[^>]*?(?:src|href)=["']?(https?:\/\/[^"'\s>]+)/gi)].map(m => m[1].split('/')[2].toLowerCase()).filter(host => !/^fonts\.(googleapis|gstatic)\.com$/.test(host)))]
       if (externos.length) avisos.push({ texto: `O jogo busca coisas na internet (${externos.join(', ')}). Sem internet na escola, essa parte não aparece.`, pedido: 'Tire tudo o que vem de fora: desenhe as imagens em SVG ou CSS no próprio arquivo e não use bibliotecas externas.' + PEDIDO_FIM })
       if (/\b(alert|prompt|confirm)\s*\(/.test(scripts)) avisos.push({ texto: 'O jogo usa janelas de aviso do navegador, que travam em alguns celulares e no modo tela cheia.', pedido: 'Troque os alert, prompt e confirm por mensagens na própria tela do jogo.' + PEDIDO_FIM })
       if (/(digite|escreva|qual [ée]) (o )?seu nome|nome do aluno|nome da crian[çc]a/i.test(html)) avisos.push({ texto: 'O jogo parece pedir o nome do aluno. Nenhum dado de aluno deve entrar no jogo publicado.', pedido: 'Tire do jogo qualquer pedido de nome ou dado do aluno.' + PEDIDO_FIM })
       // A resposta certa sempre no mesmo lugar: dá para ganhar tocando sempre no mesmo botão
-      const indices = [...scripts.matchAll(/\b(?:correta|certa|correto|certo|resposta|answer|correct)\s*:\s*(\d)\b/g)].map(m => m[1])
-      const embaralha = /Math\.random\(\)\s*-\s*0?\.5|shuffle|embaralh|misturar/i.test(scripts)
+      const indices = posicoesDaCerta(scripts)
+      const embaralha = /Math\.random\(\)\s*-\s*0?\.5|Math\.random\(\)\s*\*\s*\(\s*\w+\s*\+\s*1\s*\)|shuffle|embaralh|misturar/i.test(scripts)
       if (indices.length >= 4 && !embaralha) {
         const vezes = Math.max(...Object.values(indices.reduce((conta, i) => ({ ...conta, [i]: (conta[i] || 0) + 1 }), {})))
         if (vezes / indices.length >= 0.7) avisos.push({ texto: `A resposta certa fica quase sempre no mesmo lugar (${vezes} de ${indices.length} perguntas). A turma descobre e ganha sem pensar.`, pedido: 'Embaralhe as opções em cada pergunta e a cada partida, para a resposta certa não ficar sempre no mesmo lugar. Mantenha o resto do jogo como está.' + PEDIDO_FIM })
@@ -423,7 +489,14 @@ p, li, blockquote {
       caixa.hidden = false
       caixa.classList.toggle('ok', !avisos.length)
       if (!avisos.length) { caixa.innerHTML = '<h4>Conferi o código: nada de errado à vista.</h4>'; return }
-      caixa.innerHTML = '<h4>Antes de publicar, confira</h4><p>Dá para publicar assim mesmo. Para consertar, copie o pedido e mande na mesma conversa com a IA.</p><ul></ul>'
+      caixa.innerHTML = '<h4>Antes de publicar, confira</h4><p>Dá para publicar assim mesmo. Para consertar, copie o pedido e mande na mesma conversa com a IA.</p><ul></ul><p>Se a IA disser que não tem mais o código, ou se a conversa já estiver longa, abra uma conversa nova: cole o código do jogo, que vira um anexo, e depois o pedido, na mesma mensagem.</p>'
+      // No teste de 12/11, numa conversa longa da conta gratuita, a IA já não tinha o código e pediu para colar de novo
+      const copiarCodigo = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn--small', textContent: 'Copiar o código do jogo' })
+      copiarCodigo.onclick = async () => {
+        try { await navigator.clipboard.writeText(html); copiarCodigo.textContent = 'Copiado!' } catch { copiarCodigo.textContent = 'Copie da caixa do código' }
+        setTimeout(() => { copiarCodigo.textContent = 'Copiar o código do jogo' }, 2000)
+      }
+      caixa.append(copiarCodigo)
       for (const aviso of avisos) {
         const item = document.createElement('li')
         item.append(aviso.texto)
