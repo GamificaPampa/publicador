@@ -111,6 +111,9 @@
     .conferencia .btn { margin-top: 6px; }
     .conferencia > .btn { justify-self: start; margin-top: 0; }
     .conferencia > p { margin: 0; }
+    .conferencia .robo { display: grid; gap: 8px; padding-top: 10px; border-top: 2px dashed var(--ink); }
+    .conferencia .robo p { margin: 0; font-weight: 600; font-size: 15px; }
+    .conferencia .robo .btn { justify-self: start; }
     .erro { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #ffe0ea; font-weight: 600; }
     .sucesso { margin: 16px 0 0; padding: 12px 16px; border: 3px solid var(--ink); border-radius: 16px; background: #e3faf1; font-weight: 600; }
 
@@ -300,6 +303,7 @@ p, li, blockquote {
   <footer class="rodape">GamificaPampa · UNIPAMPA, Campus Alegrete ·<a href="#denunciar" id="link-denunciar">Denunciar um jogo</a></footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="robo.js"></script>
   <script>
     const WORKER = 'https://publicador-gamificapampa.gamificapampa.workers.dev'
     const GALERIA = 'https://gamificapampa.github.io/jogos/'
@@ -391,15 +395,16 @@ p, li, blockquote {
       const html = await htmlAtual()
       const valido = /<(html|body|script)/i.test(html)
       elemento('previa').hidden = !valido
-      if (!valido) { previaAgora = ''; elemento('previa-jogo').removeAttribute('srcdoc'); return }
-      if (html !== previaAgora) { previaAgora = html; elemento('previa-jogo').srcdoc = html; mostrarConferencia(html) }
+      if (!valido) { previaAgora = ''; elemento('previa-jogo').removeAttribute('srcdoc'); RoboTestador.cancelar(); return }
+      if (html !== previaAgora) { previaAgora = html; elemento('previa-jogo').srcdoc = RoboTestador.paraPrevia(html); mostrarConferencia(html) }
     }
     // Conferência do jogo: lê o código e avisa o que costuma dar errado nos jogos feitos com a IA (rubrica de 09/11).
     // Nada aqui impede de publicar; cada aviso traz a frase para pedir o conserto na mesma conversa
     const PEDIDO_FIM = ' Mostre o código completo do jogo num único bloco de código HTML, sem criar arquivo.'
     // Em que posição fica a resposta certa de cada pergunta. A IA marca de três jeitos:
     // pelo número (correta: 2), pela opção marcada ({ t: '1/4', certa: true }) ou pelo texto (correta: '1/4', perto da lista)
-    function posicoesDaCerta(scripts) {
+    // Em listas, guarda também o tamanho de cada opção, para ver se a certa é sempre a mais longa
+    function posicoesDaCerta(scripts, listas = []) {
       const posicoes = [...scripts.matchAll(/\b(?:correta|certa|correto|certo|resposta|answer|correct)\s*:\s*(\d)\b/g)].map(m => m[1])
       const TEXTO_CERTO = /\b(?:correta|certa|correto|resposta|answer|correct)\s*:\s*(["'`])((?:\\.|(?!\1).)*)\1/
       for (const lista of scripts.matchAll(/\b(?:opcoes|opções|alternativas|options|choices)\s*:\s*\[/g)) {
@@ -409,14 +414,22 @@ p, li, blockquote {
         while (fim < scripts.length && nivel) { const c = scripts[fim++]; if (c === '[') nivel++; else if (c === ']') nivel-- }
         const dentro = scripts.slice(inicio, fim - 1)
         if (dentro.includes('{')) {
-          const marcada = dentro.split(/\}\s*,/).findIndex(opcao => /\b(?:certa|correta|correto|correct)\s*:\s*(true|!0)\b/.test(opcao))
-          if (marcada >= 0) posicoes.push(String(marcada))
+          const opcoes = dentro.split(/\}\s*,/)
+          const marcada = opcoes.findIndex(opcao => /\b(?:certa|correta|correto|correct)\s*:\s*(true|!0)\b/.test(opcao))
+          if (marcada >= 0) {
+            posicoes.push(String(marcada))
+            const tamanhos = opcoes.map(opcao => (opcao.match(/\b(?:t|texto|text|label|nome|opcao)\s*:\s*(["'`])((?:\\.|(?!\1).)*)\1/) || [, , ''])[2].length)
+            if (tamanhos.every(Boolean)) listas.push({ certa: marcada, tamanhos })
+          }
           continue
         }
         const textos = [...dentro.matchAll(/(["'`])((?:\\.|(?!\1).)*)\1/g)].map(m => m[2])
         // A certa vem logo depois da lista ou, se não, logo antes dela
         const certa = scripts.slice(fim, fim + 300).match(TEXTO_CERTO) || [...scripts.slice(Math.max(0, lista.index - 300), lista.index).matchAll(new RegExp(TEXTO_CERTO, 'g'))].pop()
-        if (certa && textos.includes(certa[2])) posicoes.push(String(textos.indexOf(certa[2])))
+        if (certa && textos.includes(certa[2])) {
+          posicoes.push(String(textos.indexOf(certa[2])))
+          listas.push({ certa: textos.indexOf(certa[2]), tamanhos: textos.map(t => t.length) })
+        }
       }
       return posicoes
     }
@@ -459,8 +472,8 @@ p, li, blockquote {
     }
     function conferirJogo(html) {
       const avisos = []
-      // Só os scripts comuns: módulo e JSON ficam fora da conferência de sintaxe
-      const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(m => !/type=["']?(module|application\/(ld\+)?json|text\/template)/i.test(m[1])).map(m => m[2]).join('\n')
+      // Só os scripts comuns, sem type ou com um type de JavaScript: módulo, JSON, Babel e shader ficam fora da conferência de sintaxe
+      const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(m => { const tipo = (m[1].match(/\btype\s*=\s*["']?([^"'\s>]+)/i) || [, ''])[1].toLowerCase(); return !tipo || /^(text|application)\/(x-)?(javascript|ecmascript)$/.test(tipo) }).map(m => m[2]).join('\n')
       if (/^\s*```|```\s*$/.test(html)) avisos.push({ texto: 'Sobrou a marcação ``` do ChatGPT no começo ou no fim do código. Copie só o que está dentro do bloco, ou use o botão Copiar código do bloco.' })
       if (!/<\/html>\s*(```)?\s*$/i.test(html)) avisos.push({ texto: 'O código parece cortado no fim: falta o </html>. O jogo pode abrir pela metade.', pedido: 'A resposta veio cortada. Mande de novo o jogo inteiro, sem cortar.' + PEDIDO_FIM })
       try { new Function(scripts) } catch (erro) {
@@ -473,7 +486,12 @@ p, li, blockquote {
       if (/\b(alert|prompt|confirm)\s*\(/.test(scripts)) avisos.push({ texto: 'O jogo usa janelas de aviso do navegador, que travam em alguns celulares e no modo tela cheia.', pedido: 'Troque os alert, prompt e confirm por mensagens na própria tela do jogo.' + PEDIDO_FIM })
       if (/(digite|escreva|qual [ée]) (o )?seu nome|nome do aluno|nome da crian[çc]a/i.test(html)) avisos.push({ texto: 'O jogo parece pedir o nome do aluno. Nenhum dado de aluno deve entrar no jogo publicado.', pedido: 'Tire do jogo qualquer pedido de nome ou dado do aluno.' + PEDIDO_FIM })
       // A resposta certa sempre no mesmo lugar: dá para ganhar tocando sempre no mesmo botão
-      const indices = posicoesDaCerta(scripts)
+      const listas = []
+      const indices = posicoesDaCerta(scripts, listas)
+      // A certa sempre a mais longa: a turma aprende a escolher pelo tamanho (visto no teste de 12/11)
+      const comTres = listas.filter(l => l.tamanhos.length >= 3)
+      const maisLonga = comTres.filter(l => l.tamanhos[l.certa] > Math.max(...l.tamanhos.filter((t, i) => i !== l.certa)) * 1.3).length
+      if (comTres.length >= 4 && maisLonga / comTres.length >= 0.6) avisos.push({ texto: `A resposta certa costuma ser a opção mais longa (${maisLonga} de ${comTres.length} perguntas). A turma aprende a escolher pelo tamanho.`, pedido: 'Deixe as opções erradas do mesmo tamanho e com o mesmo cuidado da certa, para ninguém acertar só por escolher a opção mais longa. Mantenha o resto do jogo como está.' + PEDIDO_FIM })
       const embaralha = /Math\.random\(\)\s*-\s*0?\.5|Math\.random\(\)\s*\*\s*\(\s*\w+\s*\+\s*1\s*\)|shuffle|embaralh|misturar/i.test(scripts)
       if (indices.length >= 4 && !embaralha) {
         const vezes = Math.max(...Object.values(indices.reduce((conta, i) => ({ ...conta, [i]: (conta[i] || 0) + 1 }), {})))
@@ -483,37 +501,82 @@ p, li, blockquote {
       if (!/objetivo|voc[êe] vai (aprender|conseguir)|aprender a/i.test(textoVisivel + scripts)) avisos.push({ texto: 'Não achei o objetivo do jogo na tela de início. A turma joga melhor sabendo o que vai aprender.', pedido: 'Na tela de início, escreva numa frase o objetivo: o que a turma vai conseguir fazer depois. Mantenha o resto do jogo como está.' + PEDIDO_FIM })
       return avisos
     }
+    // Um aviso com o pedido pronto e o botão de copiar, usado pela conferência e pelo robô
+    function itemDeAviso(aviso) {
+      const item = document.createElement('li')
+      item.append(aviso.texto)
+      if (aviso.pedido) {
+        const pedido = Object.assign(document.createElement('span'), { className: 'pedido', textContent: aviso.pedido })
+        const botao = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn--small', textContent: 'Copiar o pedido' })
+        botao.onclick = async () => {
+          try { await navigator.clipboard.writeText(aviso.pedido); botao.textContent = 'Copiado!' } catch { botao.textContent = 'Selecione e copie à mão' }
+          setTimeout(() => { botao.textContent = 'Copiar o pedido' }, 2000)
+        }
+        item.append(pedido, botao)
+      }
+      return item
+    }
+    // No teste de 12/11, numa conversa longa da conta gratuita, a IA já não tinha o código e pediu para colar de novo
+    function botaoCopiarCodigo(html) {
+      const botao = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn--small', textContent: 'Copiar o código do jogo' })
+      botao.onclick = async () => {
+        try { await navigator.clipboard.writeText(html); botao.textContent = 'Copiado!' } catch { botao.textContent = 'Copie da caixa do código' }
+        setTimeout(() => { botao.textContent = 'Copiar o código do jogo' }, 2000)
+      }
+      return botao
+    }
+    const DICA_CONVERSA_NOVA = 'Se a IA disser que não tem mais o código, ou se a conversa já estiver longa, abra uma conversa nova: cole o código do jogo, que vira um anexo, e depois o pedido, na mesma mensagem.'
     function mostrarConferencia(html) {
       const caixa = elemento('conferencia')
       const avisos = conferirJogo(html)
       caixa.hidden = false
       caixa.classList.toggle('ok', !avisos.length)
-      if (!avisos.length) { caixa.innerHTML = '<h4>Conferi o código: nada de errado à vista.</h4>'; return }
-      caixa.innerHTML = '<h4>Antes de publicar, confira</h4><p>Dá para publicar assim mesmo. Para consertar, copie o pedido e mande na mesma conversa com a IA.</p><ul></ul><p>Se a IA disser que não tem mais o código, ou se a conversa já estiver longa, abra uma conversa nova: cole o código do jogo, que vira um anexo, e depois o pedido, na mesma mensagem.</p>'
-      // No teste de 12/11, numa conversa longa da conta gratuita, a IA já não tinha o código e pediu para colar de novo
-      const copiarCodigo = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn--small', textContent: 'Copiar o código do jogo' })
-      copiarCodigo.onclick = async () => {
-        try { await navigator.clipboard.writeText(html); copiarCodigo.textContent = 'Copiado!' } catch { copiarCodigo.textContent = 'Copie da caixa do código' }
-        setTimeout(() => { copiarCodigo.textContent = 'Copiar o código do jogo' }, 2000)
+      if (!avisos.length) caixa.innerHTML = '<h4>Conferi o código: nada de errado à vista.</h4>'
+      else {
+        caixa.innerHTML = `<h4>Antes de publicar, confira</h4><p>Dá para publicar assim mesmo. Para consertar, copie o pedido e mande na mesma conversa com a IA.</p><ul></ul><p>${DICA_CONVERSA_NOVA}</p>`
+        caixa.append(botaoCopiarCodigo(html))
+        for (const aviso of avisos) caixa.querySelector('ul').append(itemDeAviso(aviso))
       }
-      caixa.append(copiarCodigo)
-      for (const aviso of avisos) {
-        const item = document.createElement('li')
-        item.append(aviso.texto)
-        if (aviso.pedido) {
-          const pedido = Object.assign(document.createElement('span'), { className: 'pedido', textContent: aviso.pedido })
-          const botao = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn--small', textContent: 'Copiar o pedido' })
-          botao.onclick = async () => {
-            try { await navigator.clipboard.writeText(aviso.pedido); botao.textContent = 'Copiado!' } catch { botao.textContent = 'Selecione e copie à mão' }
-            setTimeout(() => { botao.textContent = 'Copiar o pedido' }, 2000)
-          }
-          item.append(pedido, botao)
-        }
-        caixa.querySelector('ul').append(item)
+      rodarRobo(html, caixa, avisos.length > 0)
+    }
+
+    // O robô testador (robo.js) joga sozinho e completa a conferência com o que só aparece jogando:
+    // erro no meio da partida, botão que não responde e Jogar de novo que não recomeça
+    const PEDIDO_CAMINHO = ' Encontre o erro e corrija. Confira o que guarda a fase, a pergunta e se já respondeu: cada um volta ao começo quando começa uma fase nova, o desafio final e o treino. Depois siga de cabeça todo o caminho dos botões, do Jogar ao Jogar de novo.'
+    async function rodarRobo(html, caixa, jaTemCopiar) {
+      const area = Object.assign(document.createElement('div'), { className: 'robo' })
+      area.innerHTML = '<h4>O robô está jogando…</h4><p>Ele joga sozinho, escondido e sem som, para ver se o jogo vai até o fim. Leva até 40 segundos.</p>'
+      caixa.append(area)
+      const r = await RoboTestador.testar(html)
+      if (r.cancelado || !area.isConnected) return
+      const linhas = html.split('\n')
+      const problemas = []
+      for (const erro of r.erros || []) {
+        const trecho = erro.linha ? (linhas[erro.linha - 1] || '').trim().slice(0, 80) : ''
+        const onde = trecho ? ` na linha "${trecho}"` : ''
+        problemas.push({ texto: `Jogando, apareceu um erro: ${erro.msg}${onde}.`, pedido: `Ao jogar, aparece o erro de JavaScript "${erro.msg}"${onde}. Corrija sem mudar o resto.` + PEDIDO_FIM })
+      }
+      if (r.travou) problemas.push({ texto: `O robô ficou preso depois de ${r.jogadas} toques: nenhum botão mudava a tela. Ela mostrava: "${r.tela}".`, pedido: `O jogo travou depois de ${r.jogadas} toques, na tela que mostra "${r.tela.slice(0, 100)}": nenhum botão responde.` + PEDIDO_CAMINHO + PEDIDO_FIM })
+      else if (r.chegouAoFim && r.recomecou === false) problemas.push({ texto: 'O robô chegou ao fim, mas o Jogar de novo não fez o jogo voltar a funcionar.', pedido: 'Na tela final, o botão Jogar de novo não recomeça o jogo: a partida nova não anda.' + PEDIDO_CAMINHO + PEDIDO_FIM })
+      if (problemas.length) {
+        caixa.classList.remove('ok')
+        area.innerHTML = '<h4>O robô jogou e achou problema</h4><ul></ul>'
+        for (const p of problemas) area.querySelector('ul').append(itemDeAviso(p))
+        if (!jaTemCopiar) area.append(Object.assign(document.createElement('p'), { textContent: DICA_CONVERSA_NOVA }), botaoCopiarCodigo(html))
+      } else if (r.chegouAoFim && r.recomecou) {
+        area.innerHTML = `<h4>O robô jogou até o fim</h4><p>Foram ${r.jogadas} toques, sem erro${r.treinou ? ', passando pelo Treinar os erros' : ''}, e o Jogar de novo voltou ao começo. Jogue você também: o robô não confere se as respostas estão certas.</p>`
+      } else if (r.semFim) {
+        area.innerHTML = `<h4>O robô não chegou ao fim</h4><p>Ele deu ${r.jogadas} toques em 40 segundos, sem travar e sem erro, mas não achou a tela final. Jogue você até o fim para conferir.</p>`
+      } else {
+        area.innerHTML = '<h4>O robô não conseguiu jogar</h4><p>Jogue você até o fim para conferir.</p>'
       }
     }
     let esperaPrevia
-    elemento('codigo').addEventListener('input', () => { clearTimeout(esperaPrevia); esperaPrevia = setTimeout(atualizarPrevia, 600) })
+    elemento('codigo').addEventListener('input', () => {
+      // Código colado à mão também passa a valer: sem isto, o arquivo escolhido antes continuava indo para a prévia e para a publicação
+      if (elemento('arquivo').files[0] && elemento('codigo').value.trim()) { elemento('arquivo').value = ''; arquivoEscolhido() }
+      clearTimeout(esperaPrevia); esperaPrevia = setTimeout(atualizarPrevia, 600)
+    })
     elemento('previa-reiniciar').onclick = () => { previaAgora = ''; atualizarPrevia() }
     elemento('previa-tela').onclick = () => {
       const moldura = elemento('previa-jogo')
@@ -563,7 +626,14 @@ p, li, blockquote {
     }
 
     // Publicando: confere o formulário aqui, e o Worker confere de novo antes de gravar no GitHub
+    // Um toque duplo publicava duas vezes: a leitura do arquivo vinha antes de desligar o botão
+    let publicando = false
     elemento('botao-publicar').onclick = async () => {
+      if (publicando) return
+      publicando = true
+      try { await publicar() } finally { publicando = false }
+    }
+    async function publicar() {
       const arquivo = elemento('arquivo').files[0]
       const dados = {
         professor: elemento('professor').value.trim(),
@@ -614,8 +684,15 @@ p, li, blockquote {
       elemento('link-jogo').textContent = link.replace('https://', '')
       elemento('botao-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(`Jogue "${nome}": ${link}`)
       elemento('qr').innerHTML = ''
-      new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
-      elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
+      // Se a rede da escola barrar a biblioteca do QR, o jogo já está publicado: mostra o link e esconde só o QR,
+      // para o professor não achar que deu erro e publicar de novo
+      try {
+        new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
+        elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
+        elemento('qr').hidden = elemento('botao-baixar-qr').hidden = false
+      } catch {
+        elemento('qr').hidden = elemento('botao-baixar-qr').hidden = true
+      }
       mostrar('pronto')
       elemento('estado').hidden = noAr
     }

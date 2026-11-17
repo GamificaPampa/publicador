@@ -42,6 +42,18 @@ Para testar no computador, sirva a pasta-mãe com o `identidade-visual` ao lado,
 
 Na prévia, antes de publicar, a página lê o código e avisa em palavras simples o que costuma dar errado nos jogos feitos com a IA: a marcação ``` que sobrou, o código cortado sem o `</html>`, erro de JavaScript, coisa puxada da internet (menos a fonte do Google), `alert`, pedido do nome do aluno, a resposta certa quase sempre no mesmo lugar e o objetivo que falta na tela de início. Cada aviso traz o pedido pronto para mandar na mesma conversa com a IA. Quando há erro de JavaScript, o pedido também diz onde está o parêntese, colchete ou chave que não fecha (`ondeFaltaFechar`): no teste de 12/11, só com a mensagem do navegador a IA consertou outra coisa e o erro ficou. A resposta certa é achada pelo número (`correta: 2`), pela opção marcada (`certa: true`) ou pelo texto (`correta: '1/4'`), em `posicoesDaCerta`. A conferência não impede de publicar. As regras ficam em `conferirJogo`, no `index.html`, e vieram da rubrica dos jogos de 09/11/2026 (`equipe/notas/spec-retrospectiva-2026-11-06.md`).
 
+## Robô testador
+
+O `robo.js` joga o jogo sozinho, enquanto o professor confere a prévia. Ele roda numa moldura isolada (`sandbox` sem `allow-same-origin`), escondida e sem som: o som, a voz e as janelas `alert` são trocados por versões mudas. O robô toca no Jogar e no Próxima, escolhe uma opção qualquer quando há pergunta, passa pelo Treinar os erros quando ele existe, e no fim toca no Jogar de novo, para ver se a partida nova anda. Ele avisa três coisas, cada uma com o pedido de conserto:
+
+- erro de JavaScript no meio da partida, com a linha do código original;
+- tela em que nenhum botão muda nada, depois de 6 toques seguidos;
+- Jogar de novo que não recomeça.
+
+Ele joga por até 40 segundos e não confere se as respostas estão certas. O relatório volta por `postMessage`, e a página só aceita os campos com o tipo certo, porque o jogo pode forjar a mensagem. A mesma moldura dá à prévia uma memória de mentira no lugar do `localStorage`, que a moldura isolada não tem.
+
+Para conferir vários jogos de uma vez, a equipe usa o `equipe/ferramentas/robo_jogos.mjs`, que roda o mesmo robô no Chrome sem janela (`--galeria` passa por todos os jogos publicados).
+
 ## Jogo vindo da máquina de prompts
 
 A máquina de prompts grava `sessionStorage.setItem('gp-publicador:jogo', JSON.stringify({ nome, html }))` e abre `/publicador/?origem=maquina`. O publicador limpa o endereço, põe o nome e o código no formulário e apaga a chave.
