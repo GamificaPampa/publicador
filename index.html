@@ -133,6 +133,23 @@
       .passos li.atual { font-size: 15px; padding-right: 16px; }
       .dupla { grid-template-columns: 1fr; }
     }
+    /* O cartaz para imprimir: folha A4 com o nome do jogo, o QR grande e o link, para colar na sala */
+    .cartaz { display: none; }
+    @media print {
+      @page { size: A4; margin: 14mm; }
+      html, body { background: #fff !important; }
+      body > *:not(.cartaz) { display: none !important; }
+      .cartaz { display: flex; flex-direction: column; align-items: center; gap: 7mm; min-height: 255mm; color: #2f2a4a; font-family: 'Fredoka', system-ui, sans-serif; text-align: center; }
+      .cartaz__logo { width: 70mm; height: auto; }
+      .cartaz__chamada { margin: 0; font-size: 20pt; font-weight: 600; }
+      .cartaz__nome { margin: 0; font-size: 40pt; line-height: 1.1; overflow-wrap: anywhere; }
+      .cartaz__qr { padding: 6mm; border: 1.6mm solid #2f2a4a; border-radius: 8mm; }
+      .cartaz__qr img { display: block; width: 108mm; height: 108mm; image-rendering: pixelated; }
+      .cartaz__link { margin: 0; font-size: 15pt; font-weight: 600; overflow-wrap: anywhere; }
+      .cartaz__bit { display: flex; align-items: center; gap: 5mm; margin-top: auto; }
+      .cartaz__bit img { width: 30mm; height: auto; }
+      .cartaz__bit p { margin: 0; padding: 4mm 6mm; border: 0.8mm solid #2f2a4a; border-radius: 6mm; font-size: 15pt; text-align: left; }
+    }
   </style>
 <style>/* tipografia automatica (viuvas, orfas e forcas) */
 p, li, blockquote {
@@ -147,6 +164,7 @@ p, li, blockquote {
   <svg width="0" height="0" style="position: absolute" aria-hidden="true">
     <symbol id="i-jogar" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" fill="#fff" stroke="#2f2a4a" stroke-width="3" stroke-linejoin="round"/></symbol>
     <symbol id="i-compartilhar" viewBox="0 0 24 24"><path d="M7 12l10-6M7 12l10 6" stroke="#2f2a4a" stroke-width="2.6"/><circle cx="6" cy="12" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="5.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><circle cx="18" cy="18.5" r="3.4" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/></symbol>
+    <symbol id="i-imprimir" viewBox="0 0 24 24"><path d="M7 8V3h10v5" fill="#fff" stroke="#2f2a4a" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="8" width="18" height="9" rx="2.5" fill="#fff" stroke="#2f2a4a" stroke-width="2.4"/><rect x="7" y="13.5" width="10" height="7.5" rx="1" fill="#fff" stroke="#2f2a4a" stroke-width="2.4"/><path d="M9.5 16.5h5" stroke="#2f2a4a" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-baixar" viewBox="0 0 24 24"><path d="M12 3v11m-5-5 5 5 5-5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
     <symbol id="i-enviar" viewBox="0 0 24 24"><path d="M12 15V4m-5 5 5-5 5 5" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="#2f2a4a" stroke-width="3" stroke-linecap="round"/></symbol>
     <symbol id="i-colar" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="3" fill="#fff" stroke="#2f2a4a" stroke-width="2.5"/><rect x="8.5" y="2.5" width="7" height="4" rx="1.5" fill="#ffd23f" stroke="#2f2a4a" stroke-width="2.2"/><path d="M8.5 11h7M8.5 15h5" stroke="#2f2a4a" stroke-width="2.2" stroke-linecap="round"/></symbol>
@@ -279,6 +297,7 @@ p, li, blockquote {
         <a class="btn btn--jogar" id="botao-jogar" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-jogar"/></svg>Jogar</a>
         <a class="btn btn--compartilhar" id="botao-whatsapp" target="_blank" rel="noopener"><svg width="22" height="22" aria-hidden="true"><use href="#i-compartilhar"/></svg>Mandar no WhatsApp</a>
         <a class="btn btn--baixar" id="botao-baixar-qr" download="qrcode-do-jogo.png"><svg width="22" height="22" aria-hidden="true"><use href="#i-baixar"/></svg>Baixar o QR Code</a>
+        <button class="btn btn--baixar" type="button" id="botao-cartaz"><svg width="22" height="22" aria-hidden="true"><use href="#i-imprimir"/></svg>Imprimir o cartaz</button>
       </div>
       <p class="nota">Cada envio ganha um link novo. Para corrigir o jogo, publique de novo e use o link novo.</p>
       <div class="acoes centro"><button class="btn" type="button" id="botao-outro">Publicar outro jogo</button></div>
@@ -688,14 +707,21 @@ p, li, blockquote {
       // para o professor não achar que deu erro e publicar de novo
       try {
         new QRCode(elemento('qr'), { text: link, width: 400, height: 400, colorDark: '#2f2a4a' })
-        elemento('botao-baixar-qr').href = elemento('qr').querySelector('canvas').toDataURL('image/png')
-        elemento('qr').hidden = elemento('botao-baixar-qr').hidden = false
+        elemento('botao-baixar-qr').href = elemento('cartaz-qr').src = elemento('qr').querySelector('canvas').toDataURL('image/png')
+        elemento('qr').hidden = elemento('botao-baixar-qr').hidden = elemento('botao-cartaz').hidden = false
       } catch {
-        elemento('qr').hidden = elemento('botao-baixar-qr').hidden = true
+        elemento('qr').hidden = elemento('botao-baixar-qr').hidden = elemento('botao-cartaz').hidden = true
       }
+      elemento('cartaz-nome').textContent = nome
+      // Nome comprido ganha letra menor, para o cartaz caber numa folha só
+      elemento('cartaz-nome').style.fontSize = nome.length > 70 ? '22pt' : nome.length > 38 ? '30pt' : ''
+      elemento('cartaz-link').textContent = link.replace('https://', '')
       mostrar('pronto')
       elemento('estado').hidden = noAr
     }
+
+    // A folha A4 do cartaz só aparece na impressão (@media print); a tela continua igual
+    elemento('botao-cartaz').onclick = () => window.print()
 
     elemento('botao-outro').onclick = () => {
       for (const id of ['nome', 'arquivo', 'codigo']) elemento(id).value = ''
@@ -756,5 +782,13 @@ p, li, blockquote {
     else mostrar('inicio')
     if (carregarDaMaquina()) falar('feliz', 'O jogo que você criou na máquina já está aqui. Leia as regras e toque em Quero publicar um jogo.')
   </script>
+  <div class="cartaz" id="cartaz" data-papel aria-hidden="true">
+    <img class="cartaz__logo" src="/identidade-visual/logos/gamificapampa-horizontal.svg" alt="">
+    <p class="cartaz__chamada">Aponte a câmera do celular e jogue</p>
+    <h1 class="cartaz__nome" id="cartaz-nome"></h1>
+    <div class="cartaz__qr"><img id="cartaz-qr" alt=""></div>
+    <p class="cartaz__link" id="cartaz-link"></p>
+    <div class="cartaz__bit"><img src="/identidade-visual/mascote/bit-comemorando.svg" alt=""><p>Funciona no celular, no tablet e no computador.<br>Bom jogo!</p></div>
+  </div>
 </body>
 </html>
