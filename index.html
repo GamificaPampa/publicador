@@ -138,8 +138,9 @@
     @media print {
       @page { size: A4; margin: 14mm; }
       html, body { background: #fff !important; }
-      body > *:not(.cartaz) { display: none !important; }
-      .cartaz { display: flex; flex-direction: column; align-items: center; gap: 7mm; min-height: 255mm; color: #2f2a4a; font-family: 'Fredoka', system-ui, sans-serif; text-align: center; }
+      /* Só o Imprimir o cartaz vira cartaz: o Ctrl + P em outra tela imprime a página como ela é */
+      body.imprimindo-cartaz > *:not(.cartaz) { display: none !important; }
+      body.imprimindo-cartaz .cartaz { display: flex; flex-direction: column; align-items: center; gap: 7mm; min-height: 255mm; color: #2f2a4a; font-family: 'Fredoka', system-ui, sans-serif; text-align: center; }
       .cartaz__logo { width: 70mm; height: auto; }
       .cartaz__chamada { margin: 0; font-size: 20pt; font-weight: 600; }
       .cartaz__nome { margin: 0; font-size: 40pt; line-height: 1.1; overflow-wrap: anywhere; }
@@ -720,8 +721,12 @@ p, li, blockquote {
       elemento('estado').hidden = noAr
     }
 
-    // A folha A4 do cartaz só aparece na impressão (@media print); a tela continua igual
-    elemento('botao-cartaz').onclick = () => window.print()
+    // A folha A4 do cartaz só aparece na impressão (@media print) que sai deste botão; a tela continua igual
+    elemento('botao-cartaz').onclick = () => {
+      document.body.classList.add('imprimindo-cartaz')
+      window.print()
+    }
+    addEventListener('afterprint', () => document.body.classList.remove('imprimindo-cartaz'))
 
     elemento('botao-outro').onclick = () => {
       for (const id of ['nome', 'arquivo', 'codigo']) elemento(id).value = ''
