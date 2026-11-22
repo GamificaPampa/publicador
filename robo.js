@@ -64,17 +64,25 @@
     const CONTROLE = /\b(som|m[uú]sica|ouvir|ler sozinho|tela cheia|tel[ãa]o|professor|dica|voltar|menu|pausar|ajuda|instru[cç])/i
     // Estes nunca, nem como último recurso: só ligam e desligam coisas da tela
     const NUNCA = /\b(som|m[uú]sica|ouvir|ler sozinho|tela cheia|tel[ãa]o|professor)/i
+    // Palavras da tela final, inteiras: "Pontos: 0" no placar do começo, "enfim" ou "função afim" não contam
+    const TELA_FINAL = /(^|[^\p{L}])(fim|parab[ée]ns|conclu[ií]\p{L}*|estrelas?|acertou|resultado|pontos|venceu|terminou)(?![\p{L}])/iu
+    // Jogo de desenho na tela ou de arrastar: o robô só sabe tocar em botões, então não acusa o jogo de travar
+    const outroTipo = () => document.querySelector('canvas') ? 'canvas' : document.querySelector('[draggable="true"]') ? 'arrastar' : ''
 
     async function partida() {
       const inicio = Date.now()
       let jogadas = 0, paradas = 0, chegouAoFim = false, treinou = false, recomecou = false
+      // Um Reiniciar que já está na tela desde o começo não marca a tela final: só vale quando não sobra outro botão
+      const desdeOComeco = new Set()
       await espera(600)
       while (Date.now() - inicio < TEMPO_MAX) {
         const botoes = clicaveis()
         const nomes = botoes.map(texto)
         let alvo = null, acao = 'responder'
+        if (!jogadas) botoes.filter((b) => RECOMECAR.test(texto(b))).forEach((b) => desdeOComeco.add(b))
         const recomecar = botoes.find((b) => RECOMECAR.test(texto(b)))
-        if (recomecar && (/fim|parab[ée]ns|conclu|estrela|acertou|resultado|pontos|venceu|terminou/i.test(document.body.innerText) || !botoes.some((b) => !RECOMECAR.test(texto(b)) && !TREINAR.test(texto(b)) && !CONTROLE.test(texto(b))))) {
+        const soSobraRecomecar = !botoes.some((b) => !RECOMECAR.test(texto(b)) && !TREINAR.test(texto(b)) && !CONTROLE.test(texto(b)))
+        if (recomecar && (soSobraRecomecar || (!desdeOComeco.has(recomecar) && TELA_FINAL.test(document.body.innerText)))) {
           chegouAoFim = true
           const treinar = botoes.find((b) => TREINAR.test(texto(b)))
           if (treinar && !treinou) { alvo = treinar; acao = 'treinar'; treinou = true }
@@ -90,6 +98,7 @@
         if (!alvo) alvo = botoes.find((b) => !NUNCA.test(texto(b)) && !RECOMECAR.test(texto(b)))
         if (!alvo) {
           paradas++
+          if (paradas >= 5 && !nomes.length && outroTipo()) return { outroTipo: outroTipo(), jogadas, chegouAoFim }
           if (paradas >= 5) return { travou: true, jogadas, tela: document.body.innerText.replace(/\s+/g, ' ').trim().slice(0, 160), botoes: nomes.slice(0, 6), chegouAoFim }
           await espera(800)
           continue

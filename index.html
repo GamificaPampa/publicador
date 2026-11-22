@@ -587,6 +587,8 @@ p, li, blockquote {
         area.innerHTML = `<h4>O robô jogou até o fim</h4><p>Foram ${r.jogadas} toques, sem erro${r.treinou ? ', passando pelo Treinar os erros' : ''}, e o Jogar de novo voltou ao começo. Jogue você também: o robô não confere se as respostas estão certas.</p>`
       } else if (r.semFim) {
         area.innerHTML = `<h4>O robô não chegou ao fim</h4><p>Ele deu ${r.jogadas} toques em 40 segundos, sem travar e sem erro, mas não achou a tela final. Jogue você até o fim para conferir.</p>`
+      } else if (r.outroTipo) {
+        area.innerHTML = `<h4>O robô não sabe jogar este tipo de jogo</h4><p>${r.outroTipo === 'canvas' ? 'O jogo é desenhado na tela' : 'O jogo é de arrastar'}, e o robô só sabe tocar em botões${r.jogadas ? `: ele deu ${r.jogadas} ${r.jogadas === 1 ? 'toque' : 'toques'} sem erro` : ''}. Isso não quer dizer que há problema. Jogue você até o fim para conferir.</p>`
       } else {
         area.innerHTML = '<h4>O robô não conseguiu jogar</h4><p>Jogue você até o fim para conferir.</p>'
       }
