@@ -704,6 +704,8 @@ p, li, blockquote {
 
     // Mostrando o link, o QR Code e os botões só depois que o jogo abre, para o professor não ver a página de erro
     function mostrarPronto(link, nome, noAr) {
+      // A conquista do Passaporte da Oficina (identidade-visual/js/passaporte.js)
+      window.Passaporte?.marcar('publicou')
       elemento('link-jogo').href = elemento('botao-jogar').href = link
       elemento('link-jogo').textContent = link.replace('https://', '')
       elemento('botao-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(`Jogue "${nome}": ${link}`)
